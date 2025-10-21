@@ -11,3 +11,9 @@ Raul Salas: User Profile & Rewards developer
 Rual Tling: Systems & Multimedia Developer 
 
 TRELLO
+
+npm run dev
+npm run build
+commit and push
+npm run deploy
+commit and push 
