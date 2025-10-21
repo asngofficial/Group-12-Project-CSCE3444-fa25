@@ -1,8 +1,8 @@
 {
-  "name": "testsud",
+  "name": "Group-12-Project-CSCE3444-fa25",
   "version": "1.0.0",
   "private": true,
-  "homepage": "https://your-username.github.io/testsud/",
+  "homepage": "https://asngofficial.github.io/Group-12-Project-CSCE3444-fa25/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
