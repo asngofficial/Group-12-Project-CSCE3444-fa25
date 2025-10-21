@@ -12,8 +12,12 @@ Rual Tling: Systems & Multimedia Developer
 
 TRELLO
 
-npm run dev
-npm run build
-commit and push
-npm run deploy
-commit and push 
+npm run dev // to test locally
+
+npm run build //to get vuild ready to commit
+
+commit and push // do ur commit and push (not a command)
+
+npm run deploy // this updates gh pages
+
+commit and push //commmit and push again
