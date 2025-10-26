@@ -1,4 +1,6 @@
-﻿// Account Management System using localStorage
+﻿import { generateCompleteSudoku, createSudokuPuzzle } from "./sudoku";
+
+// Account Management System using localStorage
 
 export type UserAccount = {
   id: string;
@@ -8,7 +10,6 @@ export type UserAccount = {
   xp: number;
   level: number;
   solvedPuzzles: number;
-  wins: number;
   averageTime: string;
   boardStyle: string;
   preferences: {
@@ -93,7 +94,6 @@ export function createAccount(username: string, password: string): { success: bo
     xp: 0,
     level: 1,
     solvedPuzzles: 0,
-    wins: 0,
     averageTime: '--:--',
     boardStyle: 'classic',
     preferences: {
@@ -258,11 +258,12 @@ export function getFriends(userId: string): UserAccount[] {
 
 // Initialize with demo data if empty
 export function initializeDemoData(): void {
-  const users = getAllUsers();
-  
+  let users = getAllUsers();
+  let demoUsers: UserAccount[] = [];
+
+  // Create some demo accounts if none exist
   if (users.length === 0) {
-    // Create some demo accounts
-    const demoUsers: UserAccount[] = [
+    demoUsers = [
       {
         id: 'user_demo1',
         username: 'PuzzleMaster (bot)',
@@ -271,7 +272,6 @@ export function initializeDemoData(): void {
         xp: 15420,
         level: 28,
         solvedPuzzles: 456,
-        wins: 234,
         averageTime: '5:23',
         boardStyle: 'ocean',
         preferences: { notifications: true, sound: true, darkMode: false },
@@ -286,7 +286,6 @@ export function initializeDemoData(): void {
         xp: 14890,
         level: 27,
         solvedPuzzles: 432,
-        wins: 198,
         averageTime: '5:45',
         boardStyle: 'classic',
         preferences: { notifications: true, sound: true, darkMode: false },
@@ -301,7 +300,6 @@ export function initializeDemoData(): void {
         xp: 13560,
         level: 25,
         solvedPuzzles: 398,
-        wins: 176,
         averageTime: '6:12',
         boardStyle: 'forest',
         preferences: { notifications: true, sound: false, darkMode: false },
@@ -316,7 +314,6 @@ export function initializeDemoData(): void {
         xp: 8940,
         level: 18,
         solvedPuzzles: 267,
-        wins: 123,
         averageTime: '7:08',
         boardStyle: 'sunset',
         preferences: { notifications: true, sound: true, darkMode: false },
@@ -331,7 +328,6 @@ export function initializeDemoData(): void {
         xp: 6730,
         level: 15,
         solvedPuzzles: 198,
-        wins: 89,
         averageTime: '7:45',
         boardStyle: 'royal',
         preferences: { notifications: true, sound: true, darkMode: false },
@@ -341,35 +337,32 @@ export function initializeDemoData(): void {
     ];
 
     saveUsers(demoUsers);
+    users = demoUsers; // Update users array with newly created demo users
+  }
 
-    // Create some demo puzzles
-    const demoPuzzles: Puzzle[] = demoUsers.slice(0, 3).map((user, index) => ({
-      id: `puzzle_demo${index + 1}`,
+  // Always regenerate demo puzzles to ensure they are correctly formed
+  // Clear existing puzzles first
+  localStorage.removeItem(STORAGE_KEYS.PUZZLES);
+
+  // Create some demo puzzles
+  const demoPuzzles: Puzzle[] = users.slice(0, 3).map((user, index) => {
+    const difficulty = ['Expert', 'Medium', 'Easy'][index]; // Match difficulty with generateGameGrid
+    const completeBoard = generateCompleteSudoku();
+    const puzzleGrid = createSudokuPuzzle(completeBoard, difficulty as any);
+
+    return {
+      id: `puzzle_demo${Date.now()}_${index + 1}`,
       creatorId: user.id,
       title: ['Mind Bender', 'Classic Challenge', 'Quick Solve'][index],
-      difficulty: ['Expert', 'Hard', 'Medium'][index],
-      grid: generateDemoGrid(),
+      difficulty,
+      grid: puzzleGrid,
       likes: [],
       comments: [23, 15, 41][index],
       timeToSolve: ['12:34', '8:45', '6:12'][index],
       createdAt: Date.now() - (index + 1) * 24 * 60 * 60 * 1000,
-    }));
+    };
+  });
 
-    savePuzzles(demoPuzzles);
-  }
-}
-
-function generateDemoGrid(): (number | null)[][] {
-  const grid = Array(9).fill(null).map(() => Array(9).fill(null));
-  
-  // Add some random numbers
-  for (let i = 0; i < 30; i++) {
-    const row = Math.floor(Math.random() * 9);
-    const col = Math.floor(Math.random() * 9);
-    const num = Math.floor(Math.random() * 9) + 1;
-    grid[row][col] = num;
-  }
-  
-  return grid;
+  savePuzzles(demoPuzzles);
 }
 

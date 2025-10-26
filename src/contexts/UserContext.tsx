@@ -1,5 +1,5 @@
 ﻿import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { UserAccount, getCurrentUser, updateUser, clearCurrentUser, initializeDemoData } from '../lib/accountManager';
+import { UserAccount, getCurrentUser, updateUser, clearCurrentUser } from '../lib/accountManager';
 
 type UserContextType = {
   currentUser: UserAccount | null;
@@ -16,9 +16,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize demo data on first load
-    initializeDemoData();
-    
     // Load current user from localStorage
     const user = getCurrentUser();
     setCurrentUser(user);

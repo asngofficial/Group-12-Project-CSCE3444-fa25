@@ -73,10 +73,7 @@ export function SettingsPage({ onNavigate, currentPage }: SettingsPageProps) {
                 <p className="text-2xl">{currentUser.solvedPuzzles}</p>
                 <p className="text-xs text-muted-foreground">Solved</p>
               </div>
-              <div>
-                <p className="text-2xl">{currentUser.wins}</p>
-                <p className="text-xs text-muted-foreground">Wins</p>
-              </div>
+
               <div>
                 <p className="text-2xl">{currentUser.averageTime}</p>
                 <p className="text-xs text-muted-foreground">Avg Time</p>

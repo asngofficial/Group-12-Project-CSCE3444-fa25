@@ -8,30 +8,15 @@ import { useUser } from "../contexts/UserContext";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 
+import { generateCompleteSudoku, createSudokuPuzzle, isSudokuSolved } from "../lib/sudoku";
+
 type Difficulty = 'Easy' | 'Medium' | 'Expert';
 
 // Generate a sample sudoku grid with some filled cells
-function generateGameGrid(): (number | null)[][] {
-  const grid = Array(9).fill(null).map(() => Array(9).fill(null));
-  
-  // Add some pre-filled numbers to make it look like a real game
-  const preFilledCells = [
-    [0, 0, 5], [0, 2, 8], [0, 4, 7], [0, 6, 9],
-    [1, 1, 2], [1, 3, 5], [1, 7, 1],
-    [2, 2, 3], [2, 5, 1], [2, 8, 4],
-    [3, 0, 7], [3, 4, 3], [3, 8, 2],
-    [4, 1, 9], [4, 3, 2], [4, 5, 8], [4, 7, 5],
-    [5, 0, 1], [5, 4, 6], [5, 8, 9],
-    [6, 0, 3], [6, 3, 7], [6, 6, 1],
-    [7, 1, 5], [7, 5, 9], [7, 7, 8],
-    [8, 2, 1], [8, 4, 8], [8, 6, 4], [8, 8, 7]
-  ];
-  
-  preFilledCells.forEach(([row, col, num]) => {
-    grid[row][col] = num;
-  });
-  
-  return grid;
+function generateGameGrid(difficulty: Difficulty): (number | null)[][] {
+  const completeBoard = generateCompleteSudoku();
+  const puzzle = createSudokuPuzzle(completeBoard, difficulty);
+  return puzzle;
 }
 
 function formatTime(seconds: number): string {
@@ -52,29 +37,32 @@ type GamePageProps = {
   onNavigate: (page: string) => void;
   currentPage: string;
   boardStyle?: string;
+  difficulty: string;
 };
 
-export function GamePage({ onNavigate, currentPage, boardStyle = 'classic' }: GamePageProps) {
+export function GamePage({ onNavigate, currentPage, boardStyle = 'classic', difficulty }: GamePageProps) {
   const { currentUser, updateCurrentUser } = useUser();
-  const [grid, setGrid] = useState<(number | null)[][]>(generateGameGrid);
+  const [grid, setGrid] = useState<(number | null)[][]>(() => generateGameGrid(difficulty as Difficulty));
+  const [initialGrid, setInitialGrid] = useState<(number | null)[][]>(grid);
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
-  const [difficulty, setDifficulty] = useState<Difficulty>('Medium');
   const [timer, setTimer] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [earnedXP, setEarnedXP] = useState(0);
+  const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
 
   // Timer effect
   useEffect(() => {
     const interval = setInterval(() => {
       setTimer(prev => prev + 1);
     }, 1000);
+    setTimerId(interval);
     
     return () => clearInterval(interval);
   }, []);
 
   const handleCellClick = (row: number, col: number) => {
-    if (grid[row][col] === null) {
+    if (initialGrid[row][col] === null) {
       setSelectedCell([row, col]);
     }
   };
@@ -82,8 +70,11 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic' }: Ga
   const handleNumberInput = (number: number) => {
     if (selectedCell) {
       const [row, col] = selectedCell;
+      if (initialGrid[row][col] !== null) {
+        return;
+      }
       const newGrid = [...grid];
-      newGrid[row][col] = number;
+      newGrid[row][col] = number === 0 ? null : number;
       setGrid(newGrid);
       setSelectedCell(null);
 
@@ -95,36 +86,46 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic' }: Ga
   const checkPuzzleComplete = (currentGrid: (number | null)[][]) => {
     // Check if all cells are filled
     const allFilled = currentGrid.every(row => row.every(cell => cell !== null));
-    
+
     if (allFilled) {
-      // Award XP based on difficulty
-      const xpRewards = {
-        'Easy': 50,
-        'Medium': 100,
-        'Expert': 200,
-      };
-      
-      const baseXP = xpRewards[difficulty];
-      const timeBonus = timer < 300 ? 50 : 0; // Bonus for completing under 5 minutes
-      const hintPenalty = hintsUsed * 10;
-      const totalXP = Math.max(baseXP + timeBonus - hintPenalty, 10);
-      
-      setEarnedXP(totalXP);
-      
-      if (currentUser) {
-        const newXP = currentUser.xp + totalXP;
-        const newLevel = Math.floor(newXP / 1000) + 1;
-        const newSolved = currentUser.solvedPuzzles + 1;
-        
-        updateCurrentUser({
-          xp: newXP,
-          level: newLevel,
-          solvedPuzzles: newSolved,
-          averageTime: formatTime(timer),
-        });
+      const isSolved = isSudokuSolved(currentGrid);
+
+      if (isSolved) {
+        // Award XP based on difficulty
+        const xpRewards = {
+          'Easy': 50,
+          'Medium': 100,
+          'Expert': 200,
+        };
+
+        const baseXP = xpRewards[difficulty];
+        const timeBonus = timer < 300 ? 50 : 0; // Bonus for completing under 5 minutes
+        const hintPenalty = hintsUsed * 10;
+        const totalXP = Math.max(baseXP + timeBonus - hintPenalty, 10);
+
+        setEarnedXP(totalXP);
+
+        if (currentUser) {
+          const newXP = currentUser.xp + totalXP;
+          const newLevel = Math.floor(newXP / 1000) + 1;
+          const newSolved = currentUser.solvedPuzzles + 1;
+
+          updateCurrentUser({
+            xp: newXP,
+            level: newLevel,
+            solvedPuzzles: newSolved,
+            averageTime: formatTime(timer),
+          });
+        }
+
+        if (timerId) {
+          clearInterval(timerId);
+        }
+
+        setShowCompletionDialog(true);
+      } else {
+        toast.error("It seems there are some mistakes. Keep trying!");
       }
-      
-      setShowCompletionDialog(true);
     }
   };
 
@@ -159,48 +160,34 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic' }: Ga
             </div>
           )}
         </div>
-        
-        {/* Difficulty selector */}
-        <div className="flex gap-2">
-          {(['Easy', 'Medium', 'Expert'] as Difficulty[]).map((diff) => (
-            <Button
-              key={diff}
-              variant={difficulty === diff ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDifficulty(diff)}
-              className={difficulty === diff ? getDifficultyColor(diff) : ''}
-            >
-              {diff}
-            </Button>
-          ))}
         </div>
-      </div>
-
-      {/* Game content */}
       <div className="flex-1 p-4 pb-20 flex flex-col">
         {/* Sudoku grid */}
         <div className={`${currentBoardStyle.gridBg} p-2 rounded-lg mb-4 mx-auto`}>
           <div className="grid grid-cols-9 gap-0">
             {grid.map((row, rowIndex) =>
-              row.map((cell, colIndex) => (
-                <button
-                  key={`${rowIndex}-${colIndex}`}
-                  onClick={() => handleCellClick(rowIndex, colIndex)}
-                  className={`
+              row.map((cell, colIndex) => {
+                const isPreFilled = initialGrid[rowIndex][colIndex] !== null;
+                return (
+                  <button
+                    key={`${rowIndex}-${colIndex}`}
+                    onClick={() => handleCellClick(rowIndex, colIndex)}
+                    className={`
                     w-8 h-8 ${currentBoardStyle.cellBg} border ${currentBoardStyle.cellBorder} flex items-center justify-center text-sm
                     ${selectedCell?.[0] === rowIndex && selectedCell?.[1] === colIndex 
                       ? currentBoardStyle.selectedCellBg
                       : ''
                     }
-                    ${cell !== null ? 'font-medium' : 'hover:opacity-80'}
+                    ${isPreFilled ? 'bg-gray-300 text-black font-bold cursor-not-allowed' : 'text-blue-600'}
+                    ${isPreFilled ? '' : 'hover:opacity-80'}
                     ${colIndex % 3 === 2 && colIndex < 8 ? `border-r-2 ${currentBoardStyle.thickBorder}` : ''}
                     ${rowIndex % 3 === 2 && rowIndex < 8 ? `border-b-2 ${currentBoardStyle.thickBorder}` : ''}
                   `}
                 >
-                  {cell || ''}
+                  {cell === null ? '' : cell}
                 </button>
-              ))
-            )}
+              );
+            }))}
           </div>
         </div>
 
@@ -292,7 +279,8 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic' }: Ga
                 className="flex-1"
                 onClick={() => {
                   setShowCompletionDialog(false);
-                  setGrid(generateGameGrid());
+                  setGrid(newPuzzle);
+                  setInitialGrid(newPuzzle);
                   setTimer(0);
                   setHintsUsed(0);
                   setSelectedCell(null);
