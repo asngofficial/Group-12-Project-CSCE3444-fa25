@@ -1,0 +1,97 @@
+level up code i guess idk how to put it in
+idk
+
+ #include <iostream>
+#include <fstream>
+#include <map>
+#include <string>
+#include <iomanip>
+
+using namespace std;
+
+struct Player {
+    string name;
+    int xp = 0;
+    int level = 1;
+
+    int xpToNextLevel() const {
+        // XP curve: next level requires 1000 * level XP
+        return 1000 * level;
+    }
+
+    void addXP(int amount) {
+        xp += amount;
+        while (xp >= xpToNextLevel()) {
+            xp -= xpToNextLevel();
+            level++;
+            cout << "🎉 " << name << " leveled up! New level: " << level << " 🎉\n";
+        }
+    }
+};
+
+// Load profiles from file
+map<string, Player> loadProfiles(const string &filename) {
+    map<string, Player> profiles;
+    ifstream file(filename);
+    if (!file.is_open()) return profiles;
+
+    Player p;
+    while (file >> p.name >> p.level >> p.xp) {
+        profiles[p.name] = p;
+    }
+    return profiles;
+}
+
+// Save profiles to file
+void saveProfiles(const map<string, Player> &profiles, const string &filename) {
+    ofstream file(filename);
+    for (auto &pair : profiles) {
+        file << pair.second.name << " "
+             << pair.second.level << " "
+             << pair.second.xp << "\n";
+    }
+}
+
+int getXPReward(const string &difficulty) {
+    if (difficulty == "easy") return 100;
+    if (difficulty == "medium") return 200;
+    if (difficulty == "hard") return 300;
+    if (difficulty == "extreme") return 400;
+    return 0;
+}
+
+int main() {
+    const string saveFile = "profiles.txt";
+    auto profiles = loadProfiles(saveFile);
+
+    cout << "===== Sudoku XP System =====\n";
+    cout << "Enter player name: ";
+    string playerName;
+    cin >> playerName;
+
+    Player &player = profiles[playerName];
+    player.name = playerName;
+
+    cout << "\nWelcome, " << player.name << "! (Level " << player.level << ", XP " << player.xp << ")\n";
+
+    cout << "Enter difficulty (easy / medium / hard / extreme): ";
+    string difficulty;
+    cin >> difficulty;
+
+    int reward = getXPReward(difficulty);
+    if (reward == 0) {
+        cout << "Invalid difficulty.\n";
+        return 0;
+    }
+
+    cout << "✅ " << player.name << " completed a " << difficulty << " Sudoku! +" << reward << " XP\n";
+    player.addXP(reward);
+
+    cout << "Current Level: " << player.level
+         << " | XP: " << player.xp << "/" << player.xpToNextLevel() << "\n";
+
+    saveProfiles(profiles, saveFile);
+    cout << "Progress saved!\n";
+
+    return 0;
+}
