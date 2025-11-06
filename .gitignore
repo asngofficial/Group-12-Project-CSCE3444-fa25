@@ -20,6 +20,9 @@ vite.config.temp.*
 dist/
 build/
 out/
+# Vite build output
+dist/
+.vite/
 
 # Local environment files
 .env
