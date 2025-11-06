@@ -22,22 +22,6 @@ export default defineConfig({
     assetsDir: 'assets',
     cssCodeSplit: true,
     assetsInlineLimit: 0,
-    rollupOptions: {
-      output: {
-        // ensure all assets have relative paths so GitHub Pages finds them
-        assetFileNames: (assetInfo) => {
-          if (/\.(png|jpe?g|gif|svg|ico)$/.test(assetInfo.name ?? '')) {
-            return 'assets/images/[name][extname]'
-          }
-          if (/\.(woff2?|eot|ttf|otf)$/.test(assetInfo.name ?? '')) {
-            return 'assets/fonts/[name][extname]'
-          }
-          return 'assets/[name][extname]'
-        },
-        chunkFileNames: 'assets/[name].js',
-        entryFileNames: 'assets/[name].js',
-      },
-    },
   },
 
   server: {
