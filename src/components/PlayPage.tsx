@@ -2,7 +2,7 @@
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { BottomNav } from "./BottomNav";
-import { Play, Zap, Target, Flame, Trophy } from "lucide-react";
+import { Play, Zap, Target, Flame, Trophy, HelpCircle } from "lucide-react";
 
 type Difficulty = {
   id: string;
@@ -16,7 +16,7 @@ type Difficulty = {
 
 const difficulties: Difficulty[] = [
   {
-    id: 'easy',
+    id: 'Easy',
     name: 'Easy',
     description: 'Perfect for beginners',
     xpReward: '+50 XP',
@@ -25,7 +25,7 @@ const difficulties: Difficulty[] = [
     estimatedTime: '5-10 min'
   },
   {
-    id: 'medium',
+    id: 'Medium',
     name: 'Medium',
     description: 'A balanced challenge',
     xpReward: '+100 XP',
@@ -34,16 +34,16 @@ const difficulties: Difficulty[] = [
     estimatedTime: '10-15 min'
   },
   {
-    id: 'hard',
-    name: 'Hard',
-    description: 'For experienced players',
+    id: 'Expert',
+    name: 'Expert',
+    description: 'Only for masters',
     xpReward: '+200 XP',
     color: 'from-orange-500 to-orange-600',
     icon: '🔥',
     estimatedTime: '15-25 min'
   },
   {
-    id: 'expert',
+    id: 'Expert',
     name: 'Expert',
     description: 'Only for masters',
     xpReward: '+500 XP',
@@ -64,7 +64,6 @@ export function PlayPage({ onNavigate, currentPage, onStartGame }: PlayPageProps
     if (onStartGame) {
       onStartGame(difficultyId);
     }
-    onNavigate('game');
   };
 
   return (
@@ -75,12 +74,20 @@ export function PlayPage({ onNavigate, currentPage, onStartGame }: PlayPageProps
           <h1 className="text-xl">Play Sudoku</h1>
           <p className="text-sm text-muted-foreground">Choose your challenge level</p>
         </div>
-        <button 
-          onClick={() => onNavigate('leaderboard')}
-          className="p-2 hover:bg-accent rounded-md"
-        >
-          <Trophy className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => onNavigate('tutorial')}
+            className="p-2 hover:bg-accent rounded-md"
+          >
+            <HelpCircle className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={() => onNavigate('leaderboard')}
+            className="p-2 hover:bg-accent rounded-md"
+          >
+            <Trophy className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       {/* Content */}
