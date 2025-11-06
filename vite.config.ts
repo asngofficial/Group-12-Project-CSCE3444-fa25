@@ -5,7 +5,7 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   // 👇 Must match your GitHub repo name exactly (case-sensitive)
-  // base: '/Group-12-Project-CSCE3444-fa25/',
+  base: '/Group-12-Project-CSCE3444-fa25/',
 
   plugins: [react()],
 

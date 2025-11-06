@@ -93,3 +93,6 @@ temp/
 # Ignore local gh-pages build folder
 gh-pages/
 docs/
+
+# Visual Studio workspace files
+.vs/
