@@ -32,6 +32,11 @@
   - Set the `PlayPage` as the default page after login.
 - **Build Configuration:**
   - Commented out the `base` property in `vite.config.ts` in an attempt to resolve local development issues.
+- **Accessibility:**
+  - Addressed "No page regions" by adding a `visually-hidden` CSS class, wrapping main content in `<main>`, and navigation in `<nav>`.
+  - Resolved "Missing first level heading" by adding a visually hidden `<h1>` to `src/App.tsx`.
+  - Fixed "Skipped heading level" by adjusting heading hierarchy in `src/components/PlayPage.tsx` (added `<h2>` for difficulty section, changed "Daily Challenge" `<h3>` to `<h2>`).
+  - Corrected "Empty button" errors by adding `aria-label` attributes to icon buttons in `src/components/PlayPage.tsx`.
 
 ### Removed
 - Duplicate `src` directory.

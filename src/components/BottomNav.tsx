@@ -36,7 +36,7 @@ type BottomNavProps = {
 
 export function BottomNav({ onNavigate, currentPage }: BottomNavProps) {
   return (
-    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-background border-t">
+    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-background border-t">
       <div className="flex items-center justify-around py-2">
         {navItems.map(({ id, label, icon: Icon }) => (
           <button
@@ -53,7 +53,7 @@ export function BottomNav({ onNavigate, currentPage }: BottomNavProps) {
           </button>
         ))}
       </div>
-    </div>
+    </nav>
   );
 }
 

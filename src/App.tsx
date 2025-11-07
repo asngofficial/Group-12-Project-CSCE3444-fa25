@@ -67,7 +67,10 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background max-w-sm mx-auto">
-      {renderPage()}
+      <h1 className="visually-hidden">Sudoku Application</h1>
+      <main>
+        {renderPage()}
+      </main>
     </div>
   );
 }

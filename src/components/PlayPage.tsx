@@ -78,12 +78,14 @@ export function PlayPage({ onNavigate, currentPage, onStartGame }: PlayPageProps
           <button 
             onClick={() => onNavigate('tutorial')}
             className="p-2 hover:bg-accent rounded-md"
+            aria-label="Go to Tutorial Page"
           >
             <HelpCircle className="h-5 w-5" />
           </button>
           <button 
             onClick={() => onNavigate('leaderboard')}
             className="p-2 hover:bg-accent rounded-md"
+            aria-label="Go to Leaderboard Page"
           >
             <Trophy className="h-5 w-5" />
           </button>
@@ -109,6 +111,7 @@ export function PlayPage({ onNavigate, currentPage, onStartGame }: PlayPageProps
           </Card>
 
           {/* Difficulty Cards */}
+          <h2 className="text-lg font-semibold mt-4">Choose Difficulty</h2>
           <div className="space-y-3">
             {difficulties.map((difficulty) => (
               <Card 
@@ -160,7 +163,7 @@ export function PlayPage({ onNavigate, currentPage, onStartGame }: PlayPageProps
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <h3>Daily Challenge</h3>
+                  <h2 className="text-lg font-semibold">Daily Challenge</h2>
                   <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
                     +750 XP
                   </Badge>
