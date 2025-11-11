@@ -69,7 +69,7 @@ initializeDatabase();
 const app = express();
 const httpServer = createServer(app);
 const allowedOrigins = [
-  'https://asngofficial.github.io/Group-12-Project-CSCE3444-fa25', // Production
+  'https://asngofficial.github.io', // Production
   'http://localhost:5173',             // Local Dev
 ];
 
