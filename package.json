@@ -35,7 +35,7 @@
             "clsx": "*",
             "cmdk": "^1.1.1",
             "cors": "*",
-            "dotenv": "*",
+            "dotenv": "^17.2.3",
             "embla-carousel-react": "^8.6.0",
             "express": "*",
             "input-otp": "^1.4.2",

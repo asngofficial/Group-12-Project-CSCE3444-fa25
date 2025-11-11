@@ -12,9 +12,150 @@
       "profileColor": "#671867",
       "friends": [],
       "createdAt": "2025-11-11T17:58:51.521Z"
+    },
+    {
+      "id": "user_mmwqtl94",
+      "username": "testadmin",
+      "password": "$2b$10$NeWV2bM2HiJ9Uvf1YUILGuvSfdEBmo6jBjQiIonBJCmYdk9.l.2oK",
+      "email": null,
+      "xp": 0,
+      "level": 1,
+      "solvedPuzzles": 0,
+      "averageTime": "0s",
+      "profileColor": "#4e0ee",
+      "friends": [],
+      "createdAt": "2025-11-11T21:58:22.322Z"
     }
   ],
-  "rooms": [],
+  "rooms": [
+    {
+      "id": "room_lqmqnhhp",
+      "code": "406195",
+      "hostId": "user_mmwqtl94",
+      "difficulty": "Easy",
+      "puzzle": [
+        [
+          null,
+          null,
+          null,
+          1
+        ],
+        [
+          3,
+          1,
+          4,
+          2
+        ],
+        [
+          2,
+          3,
+          1,
+          4
+        ],
+        [
+          1,
+          4,
+          2,
+          null
+        ]
+      ],
+      "initialPuzzle": [
+        [
+          null,
+          null,
+          null,
+          1
+        ],
+        [
+          3,
+          1,
+          4,
+          2
+        ],
+        [
+          2,
+          3,
+          1,
+          4
+        ],
+        [
+          1,
+          4,
+          2,
+          null
+        ]
+      ],
+      "solution": [
+        [
+          4,
+          2,
+          3,
+          1
+        ],
+        [
+          3,
+          1,
+          4,
+          2
+        ],
+        [
+          2,
+          3,
+          1,
+          4
+        ],
+        [
+          1,
+          4,
+          2,
+          3
+        ]
+      ],
+      "maxPlayers": 50,
+      "players": [
+        {
+          "userId": "user_mmwqtl94",
+          "username": "testadmin",
+          "profileColor": "#4e0ee",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 0,
+          "isReady": false,
+          "placement": 0
+        }
+      ],
+      "grids": {
+        "user_mmwqtl94": [
+          [
+            null,
+            null,
+            null,
+            1
+          ],
+          [
+            3,
+            1,
+            4,
+            2
+          ],
+          [
+            2,
+            3,
+            1,
+            4
+          ],
+          [
+            1,
+            4,
+            2,
+            null
+          ]
+        ]
+      },
+      "status": "waiting",
+      "createdAt": "2025-11-11T22:04:14.890Z"
+    }
+  ],
   "friendRequests": [],
   "notifications": [],
   "puzzles": [],
