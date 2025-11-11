@@ -1,0 +1,618 @@
+{
+  "users": [
+    {
+      "id": "user_200iqp7y",
+      "username": "admin",
+      "password": "$2b$10$QJ2uytd51KRMckyqaebtL.Wr0.n7iDxjvUsQwO7z.pKCgeqWqy78C",
+      "email": null,
+      "xp": 0,
+      "level": 1,
+      "solvedPuzzles": 0,
+      "averageTime": "0s",
+      "profileColor": "#9eeb32",
+      "friends": [],
+      "createdAt": "2025-11-08T23:21:15.349Z",
+      "preferences": {
+        "darkMode": true
+      }
+    },
+    {
+      "id": "user_9jkljhxv",
+      "username": "bug",
+      "password": "$2b$10$bUfVQsq4RU.V38nlNYU3a.h9aKdkszf8IpA1wNbB3IKrahjNQPYpO",
+      "email": null,
+      "xp": 100,
+      "level": 1,
+      "solvedPuzzles": 1,
+      "averageTime": "00:07",
+      "profileColor": "#402628",
+      "friends": [],
+      "createdAt": "2025-11-08T23:30:59.799Z"
+    },
+    {
+      "id": "user_1sul944n",
+      "username": "edge",
+      "password": "$2b$10$/GGK5uCHGcxZoEHj24m9o.LID6g1jIPlHghxcmfqEzOS8Km7xaRvG",
+      "email": null,
+      "xp": 25,
+      "level": 1,
+      "solvedPuzzles": 0,
+      "averageTime": "00:03",
+      "profileColor": "#aa1e93",
+      "friends": [],
+      "createdAt": "2025-11-09T00:00:29.567Z"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "room_oajf6b96",
+      "code": "933607",
+      "hostId": "user_200iqp7y",
+      "difficulty": "Medium",
+      "puzzle": [
+        [
+          null,
+          null,
+          null,
+          null,
+          6,
+          4
+        ],
+        [
+          2,
+          6,
+          4,
+          null,
+          null,
+          5
+        ],
+        [
+          null,
+          null,
+          5,
+          4,
+          null,
+          null
+        ],
+        [
+          null,
+          4,
+          null,
+          6,
+          5,
+          2
+        ],
+        [
+          null,
+          null,
+          6,
+          null,
+          2,
+          null
+        ],
+        [
+          3,
+          1,
+          null,
+          null,
+          4,
+          6
+        ]
+      ],
+      "solution": [
+        [
+          5,
+          3,
+          1,
+          2,
+          6,
+          4
+        ],
+        [
+          2,
+          6,
+          4,
+          1,
+          3,
+          5
+        ],
+        [
+          6,
+          2,
+          5,
+          4,
+          1,
+          3
+        ],
+        [
+          1,
+          4,
+          3,
+          6,
+          5,
+          2
+        ],
+        [
+          4,
+          5,
+          6,
+          3,
+          2,
+          1
+        ],
+        [
+          3,
+          1,
+          2,
+          5,
+          4,
+          6
+        ]
+      ],
+      "maxPlayers": 50,
+      "players": [
+        {
+          "userId": "user_200iqp7y",
+          "username": "admin",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 0,
+          "isReady": false
+        }
+      ],
+      "status": "waiting",
+      "createdAt": "2025-11-08T23:59:49.823Z"
+    },
+    {
+      "id": "room_sqwqn1bm",
+      "code": "172150",
+      "hostId": "user_200iqp7y",
+      "difficulty": "Medium",
+      "puzzle": [
+        [
+          2,
+          null,
+          6,
+          3,
+          null,
+          null
+        ],
+        [
+          3,
+          null,
+          1,
+          null,
+          6,
+          null
+        ],
+        [
+          null,
+          null,
+          4,
+          1,
+          null,
+          null
+        ],
+        [
+          1,
+          6,
+          2,
+          5,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          3,
+          4,
+          5,
+          2
+        ],
+        [
+          null,
+          2,
+          5,
+          null,
+          null,
+          null
+        ]
+      ],
+      "solution": [
+        [
+          2,
+          5,
+          6,
+          3,
+          4,
+          1
+        ],
+        [
+          3,
+          4,
+          1,
+          2,
+          6,
+          5
+        ],
+        [
+          5,
+          3,
+          4,
+          1,
+          2,
+          6
+        ],
+        [
+          1,
+          6,
+          2,
+          5,
+          3,
+          4
+        ],
+        [
+          6,
+          1,
+          3,
+          4,
+          5,
+          2
+        ],
+        [
+          4,
+          2,
+          5,
+          6,
+          1,
+          3
+        ]
+      ],
+      "maxPlayers": 50,
+      "players": [
+        {
+          "userId": "user_200iqp7y",
+          "username": "admin",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 0,
+          "isReady": false
+        },
+        {
+          "userId": "user_1sul944n",
+          "username": "edge",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 0,
+          "isReady": true
+        }
+      ],
+      "status": "waiting",
+      "createdAt": "2025-11-09T00:01:54.772Z"
+    },
+    {
+      "id": "room_z3iunali",
+      "code": "173979",
+      "hostId": "user_200iqp7y",
+      "difficulty": "Medium",
+      "puzzle": [
+        [
+          null,
+          null,
+          null,
+          1,
+          null,
+          null
+        ],
+        [
+          1,
+          3,
+          6,
+          4,
+          null,
+          2
+        ],
+        [
+          5,
+          6,
+          null,
+          null,
+          4,
+          3
+        ],
+        [
+          null,
+          2,
+          4,
+          null,
+          1,
+          null
+        ],
+        [
+          2,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          6,
+          4,
+          5,
+          null,
+          2,
+          null
+        ]
+      ],
+      "solution": [
+        [
+          4,
+          5,
+          2,
+          1,
+          3,
+          6
+        ],
+        [
+          1,
+          3,
+          6,
+          4,
+          5,
+          2
+        ],
+        [
+          5,
+          6,
+          1,
+          2,
+          4,
+          3
+        ],
+        [
+          3,
+          2,
+          4,
+          6,
+          1,
+          5
+        ],
+        [
+          2,
+          1,
+          3,
+          5,
+          6,
+          4
+        ],
+        [
+          6,
+          4,
+          5,
+          3,
+          2,
+          1
+        ]
+      ],
+      "maxPlayers": 50,
+      "players": [
+        {
+          "userId": "user_200iqp7y",
+          "username": "admin",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 107,
+          "isReady": false
+        }
+      ],
+      "status": "active",
+      "createdAt": "2025-11-09T00:07:30.561Z",
+      "startedAt": "2025-11-09T00:10:04.390Z"
+    },
+    {
+      "id": "room_y38nl4dk",
+      "code": "530809",
+      "hostId": "user_200iqp7y",
+      "difficulty": "Easy",
+      "puzzle": [
+        [
+          null,
+          3,
+          2,
+          4
+        ],
+        [
+          4,
+          null,
+          3,
+          1
+        ],
+        [
+          2,
+          4,
+          null,
+          3
+        ],
+        [
+          3,
+          1,
+          4,
+          null
+        ]
+      ],
+      "solution": [
+        [
+          1,
+          3,
+          2,
+          4
+        ],
+        [
+          4,
+          2,
+          3,
+          1
+        ],
+        [
+          2,
+          4,
+          1,
+          3
+        ],
+        [
+          3,
+          1,
+          4,
+          2
+        ]
+      ],
+      "maxPlayers": 50,
+      "players": [
+        {
+          "userId": "user_200iqp7y",
+          "username": "admin",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 124,
+          "isReady": false
+        }
+      ],
+      "status": "active",
+      "createdAt": "2025-11-09T00:15:34.673Z",
+      "startedAt": "2025-11-09T00:16:05.107Z"
+    },
+    {
+      "id": "room_6q3ocha1",
+      "code": "250431",
+      "hostId": "user_1sul944n",
+      "difficulty": "Medium",
+      "puzzle": [
+        [
+          5,
+          2,
+          null,
+          null,
+          4,
+          3
+        ],
+        [
+          null,
+          null,
+          null,
+          5,
+          null,
+          6
+        ],
+        [
+          1,
+          4,
+          5,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          6,
+          null,
+          4,
+          null,
+          5
+        ],
+        [
+          null,
+          5,
+          null,
+          null,
+          null,
+          1
+        ],
+        [
+          null,
+          1,
+          null,
+          6,
+          5,
+          4
+        ]
+      ],
+      "solution": [
+        [
+          5,
+          2,
+          6,
+          1,
+          4,
+          3
+        ],
+        [
+          4,
+          3,
+          1,
+          5,
+          2,
+          6
+        ],
+        [
+          1,
+          4,
+          5,
+          3,
+          6,
+          2
+        ],
+        [
+          2,
+          6,
+          3,
+          4,
+          1,
+          5
+        ],
+        [
+          6,
+          5,
+          4,
+          2,
+          3,
+          1
+        ],
+        [
+          3,
+          1,
+          2,
+          6,
+          5,
+          4
+        ]
+      ],
+      "maxPlayers": 50,
+      "players": [
+        {
+          "userId": "user_1sul944n",
+          "username": "edge",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 0,
+          "isReady": false
+        },
+        {
+          "userId": "user_200iqp7y",
+          "username": "admin",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 0,
+          "isReady": true
+        }
+      ],
+      "status": "active",
+      "createdAt": "2025-11-09T00:18:49.561Z",
+      "startedAt": "2025-11-09T00:19:04.742Z"
+    }
+  ],
+  "friendRequests": [],
+  "notifications": [],
+  "puzzles": [],
+  "challenges": []
+}

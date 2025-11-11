@@ -1,14 +1,13 @@
 # ✅ Deployment Ready
 
-Your Sudoku game is now fully set up and ready to deploy!
+Your Sudoku multiplayer game is now fully set up and ready to deploy!
 
-## What Was Fixed
+## Latest Updates
 
-1. **File Structure**: All components, contexts, and lib files are now properly organized in `/src/`
-2. **Import Errors Fixed**: 
-   - Fixed typo in `/src/components/ui/alert.tsx` (was `import * *` now `import * as`)
-   - Removed `next-themes` dependency from Toaster component (simplified to use light theme)
-3. **Duplicates Handled**: Old files in root `/components` are still present but won't interfere (Vite only uses `/src`)
+1. **Backend API Integration**: Connected to https://Group-12-Project-CSCE3444-fa25.onrender.com/ for synchronized multiplayer experience
+2. **Demo/Bypass Mode**: Added "Quick Demo (Skip Login)" button for easy testing without API access
+3. **Graceful Fallbacks**: App automatically falls back to local storage when API is unavailable
+4. **GitHub Actions**: Deployment workflow properly configured in `.github/workflows/`
 
 ## Project Structure
 
@@ -87,14 +86,21 @@ Your app will be live at: `https://username.github.io/repository-name/`
 
 ## All Features Working
 
-✅ Login/Account system with localStorage  
+✅ Backend API integration with local fallback
+✅ Quick Demo mode for testing (bypass button)
+✅ Login/Account system with API sync
+✅ Real-time multiplayer with room codes
 ✅ XP earning and leveling system  
-✅ Friends management  
+✅ Friends management with requests
 ✅ Leaderboards (Global & Friends)  
 ✅ Board customization (8 themes)  
-✅ Community puzzles  
-✅ Challenge mode  
-✅ Multiple difficulty levels  
+✅ Bot challenges and daily puzzles
+✅ Challenge mode with friend invites
+✅ Multiple difficulty levels (Easy to Expert)
+✅ Notifications system
+✅ Dark mode toggle
+✅ Desktop and mobile UI optimization
+✅ FAQ page
 ✅ Toast notifications  
 ✅ Responsive mobile-first design  
 

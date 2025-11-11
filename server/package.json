@@ -1,0 +1,24 @@
+{
+  "name": "Group-12-Project-CSCE3444-fa25",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "dotnet": "^1.1.4",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "lowdb": "^2.1.0",
+    "socket": "^1.1.25",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0",
+    "vite": "^7.2.2"
+  }
+}

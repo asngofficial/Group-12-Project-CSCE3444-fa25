@@ -12,7 +12,6 @@ package-lock.json
 pnpm-lock.yaml
 yarn.lock
 
-
 # Vite cache
 .vite/
 vite.config.temp.*
@@ -32,6 +31,7 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
 
 # ============================
 # 🧱 IDE / Editor Config

@@ -1,0 +1,25 @@
+{
+  "name": "Group-12-Project-CSCE3444-fa25-server",
+  "version": "1.0.0",
+  "description": "Backend API for Group-12-Project-CSCE3444-fa25 multiplayer Sudoku game",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": [
+    "sudoku",
+    "multiplayer",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.3.1",
+    "uuid": "^9.0.1"
+  }
+}

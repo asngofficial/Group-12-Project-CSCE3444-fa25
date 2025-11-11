@@ -1,23 +1,11 @@
-# Group-12-Project-CSCE3444-fa25
-This Repository is for a team project in a software engineering class. UNT Fall 2025.
 
-Team Name: MSRR
-Project Idea: TO develop a Sudoku game accessible to all experience levels.
+  # features
 
-ROSTER 
-Matthew Best: GUI & Interaction Developer & Team Coordinator
-Samuel Afon: Game Logic & Puzzle Generation Developer  
-Raul Salas: User Profile & Rewards developer   
-Rual Tling: Systems & Multimedia Developer 
+  This is a code bundle for features. The original project is available at https://www.figma.com/design/0TuW8arFtkTPoVXdLvWAr8/features.
 
-TRELLO
+  ## Running the code
 
-npm run dev // to test locally
+  Run `npm i` to install the dependencies.
 
-npm run build //to get vuild ready to commit
-
-commit and push // do ur commit and push (not a command)
-
-npm run deploy // this updates gh pages
-
-commit and push //commmit and push again
+  Run `npm run dev` to start the development server.
+  

@@ -1,9 +1,9 @@
-﻿import * as React from "react";
+import * as React from "react";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   MoreHorizontalIcon,
-} from "lucide-react";
+} from "lucide-react@0.487.0";
 
 import { cn } from "./utils";
 import { Button, buttonVariants } from "./button";
@@ -125,4 +125,3 @@ export {
   PaginationNext,
   PaginationEllipsis,
 };
-
