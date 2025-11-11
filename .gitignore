@@ -100,3 +100,4 @@ docs/
 
 # Visual Studio workspace files
 .vs/
+".env" 

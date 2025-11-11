@@ -1,0 +1,22 @@
+{
+  "users": [
+    {
+      "id": "user_7cv3cbde",
+      "username": "admin",
+      "password": "$2b$10$/qAu8nzKJmL1s/xu/9klFODjJLaJSB.u4LPrmvchIhROjLYsT8jAu",
+      "email": null,
+      "xp": 0,
+      "level": 1,
+      "solvedPuzzles": 0,
+      "averageTime": "0s",
+      "profileColor": "#671867",
+      "friends": [],
+      "createdAt": "2025-11-11T17:58:51.521Z"
+    }
+  ],
+  "rooms": [],
+  "friendRequests": [],
+  "notifications": [],
+  "puzzles": [],
+  "challenges": []
+}
