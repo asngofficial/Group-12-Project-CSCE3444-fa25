@@ -65,5 +65,6 @@
             "build": "vite build",
             "preview": "vite preview",
             "deploy": "gh-pages -d dist"
-      }
+      },
+      "homepage": "https://asngofficial.github.io/Group-12-Project-CSCE3444-fa25/"
 }
