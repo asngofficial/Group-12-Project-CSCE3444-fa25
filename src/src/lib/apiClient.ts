@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // Type definitions matching the backend
 export type User = {
@@ -80,9 +80,14 @@ export type Puzzle = {
 
 class APIClient {
   private baseUrl: string;
+  private setBackendStatusCallback: ((status: boolean) => void) | null = null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
+  }
+
+  public setBackendStatus(callback: (status: boolean) => void) {
+    this.setBackendStatusCallback = callback;
   }
 
   private async request<T>(
@@ -90,6 +95,7 @@ class APIClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
+    console.log(`API Request: ${options.method || 'GET'} ${url}`); // Log request start
     const token = localStorage.getItem('Group-12-Project-CSCE3444-fa25_AUTH_TOKEN');
 
     const defaultOptions: RequestInit = {
@@ -110,23 +116,58 @@ class APIClient {
     try {
       const response = await fetch(url, defaultOptions);
       
+      if (this.setBackendStatusCallback) {
+        if (!response.ok) {
+          console.log(`API Client: Backend returned non-OK status ${response.status}. Marking as unresponsive.`);
+          this.setBackendStatusCallback(true); 
+        } else {
+          console.log('API Client: Backend responsive (successful fetch).');
+          this.setBackendStatusCallback(false); 
+        }
+      }
+
       if (!response.ok) {
         if (response.status === 401) {
-          // Handle token expiration or invalid token, e.g., by logging out the user
           console.error('Authentication error. Logging out.');
-          // Consider calling a logout function here
         }
-        const error = await response.json().catch(() => ({ message: 'Request failed' }));
-        throw new Error(error.message || `HTTP ${response.status}`);
+        try {
+          const error = await response.json();
+          throw new Error(error.message || `HTTP ${response.status}`);
+        } catch (jsonError: any) {
+          // If parsing JSON fails, it means the response was not valid JSON.
+          // This often happens when the server returns HTML for an error, or is misconfigured.
+          // Treat this as an unresponsive state if the original response was not OK.
+          if (this.setBackendStatusCallback) {
+            console.log('API Client: Backend returned non-JSON error. Marking as unresponsive.');
+            this.setBackendStatusCallback(true); 
+          }
+          throw new Error(`Request failed: Invalid response from server.`);
+        }
       }
 
       return await response.json();
     } catch (error: any) {
-      // Check if it's a network error
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      console.error('API request caught error:', error); // Log the full error object for debugging
+
+      // Check for common network-related errors
+      const isNetworkError = 
+        (error.name === 'TypeError' && (
+          error.message.includes('Failed to fetch') || 
+          error.message.includes('NetworkError') ||
+          error.message.includes('network connection was lost') || // Safari
+          error.message.includes('The Internet connection appears to be offline') // Firefox
+        )) ||
+        (error.message && error.message.includes('ECONNREFUSED')) || // Direct check for ECONNREFUSED if it propagates
+        (error.message && error.message.includes('ERR_CONNECTION_REFUSED')); // Chrome specific
+
+      if (isNetworkError) {
+        if (this.setBackendStatusCallback) {
+          console.log('API Client: Backend unreachable (NETWORK_ERROR detected). Marking as unresponsive.');
+          this.setBackendStatusCallback(true); 
+        }
         throw new Error('NETWORK_ERROR');
       }
-      console.error('API request failed:', error);
+      console.error('API request failed:', error); // Log full error object
       throw error;
     }
   }

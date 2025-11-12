@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useUser } from './UserContext';
 
 type ThemeContextType = {
@@ -10,9 +10,24 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { currentUser, updateCurrentUser } = useUser();
-  const isDarkMode = currentUser?.preferences?.darkMode ?? true; // Default to dark mode
+  
+  // Load initial dark mode state from localStorage, default to true (dark mode)
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const savedMode = localStorage.getItem('appDarkMode');
+    if (savedMode !== null) {
+      return JSON.parse(savedMode);
+    }
+    // If no saved preference, check currentUser preference if logged in
+    if (currentUser?.preferences?.darkMode !== undefined) {
+      return currentUser.preferences.darkMode;
+    }
+    return true; // Default to dark mode
+  });
 
+  // Sync localStorage when isDarkMode changes
   useEffect(() => {
+    localStorage.setItem('appDarkMode', JSON.stringify(isDarkMode));
+    
     // Apply or remove dark class on document element (html tag)
     const htmlElement = document.documentElement;
     
@@ -29,12 +44,23 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     console.log('HTML classes:', htmlElement.className);
   }, [isDarkMode]);
 
+  // Sync theme with currentUser preferences when currentUser changes
+  useEffect(() => {
+    if (currentUser?.preferences?.darkMode !== undefined && currentUser.preferences.darkMode !== isDarkMode) {
+      setIsDarkMode(currentUser.preferences.darkMode);
+    }
+  }, [currentUser]);
+
   const toggleDarkMode = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode); // Update local state and localStorage via useEffect
+
     if (currentUser) {
+      // Also update currentUser preferences if logged in
       updateCurrentUser({
         preferences: {
           ...currentUser.preferences,
-          darkMode: !isDarkMode,
+          darkMode: newMode,
         },
       });
     }

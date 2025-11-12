@@ -55,13 +55,13 @@ export function BottomNav({ onNavigate, currentPage }: BottomNavProps) {
     };
 
     fetchCount(); // Initial fetch
-    const interval = setInterval(fetchCount, 10000); // Poll every 10 seconds
+    // Removed: const interval = setInterval(fetchCount, 10000); // Poll every 10 seconds
 
-    return () => clearInterval(interval);
+    // Removed: return () => clearInterval(interval);
   }, [currentUser]);
 
   return (
-    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-background/70 backdrop-blur-xl border-t border-border/40 saturate-150">
+    <div className="fixed bottom-0 w-full bg-background/70 backdrop-blur-xl border-t border-border/40 saturate-150">
       <div className="flex items-center justify-around py-2">
         {navItems.map(({ id, label, icon: Icon }) => (
           <button

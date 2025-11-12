@@ -57,9 +57,9 @@ export function DesktopNav({ onNavigate, currentPage, onJoinRoom }: DesktopNavPr
     };
 
     fetchCount(); // Initial fetch
-    const interval = setInterval(fetchCount, 10000); // Poll every 10 seconds
+    // Removed: const interval = setInterval(fetchCount, 10000); // Poll every 10 seconds
 
-    return () => clearInterval(interval);
+    // Removed: return () => clearInterval(interval);
   }, [currentUser]);
 
   if (!currentUser) return null;

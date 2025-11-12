@@ -6,6 +6,7 @@ import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { Alert, AlertDescription } from "./ui/alert";
 import { useUser } from "../contexts/UserContext";
+import { useTheme } from "../contexts/ThemeContext"; // Import useTheme
 import { loginUser, registerUser } from "../lib/hybridAccountManager";
 import { Moon, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -16,23 +17,8 @@ export function LoginForm() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState("");
   const { setUser } = useUser();
+  const { isDarkMode, toggleDarkMode } = useTheme(); // Use global theme context
   
-  // Handle dark mode for login page (default to true)
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('loginDarkMode');
-    return saved !== null ? JSON.parse(saved) : true; // Default to dark mode
-  });
-
-  useEffect(() => {
-    // Apply dark mode to document
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('loginDarkMode', JSON.stringify(isDarkMode));
-  }, [isDarkMode]);
-
   const handleBypass = () => {
     // Create a demo user and log in directly
     const demoUser = {
@@ -50,7 +36,7 @@ export function LoginForm() {
       preferences: {
         notifications: true,
         sound: true,
-        darkMode: isDarkMode,
+        darkMode: isDarkMode, // Use global isDarkMode
       },
       friends: [],
       achievements: [],
@@ -196,7 +182,7 @@ export function LoginForm() {
               <Switch
                 id="loginDarkMode"
                 checked={isDarkMode}
-                onCheckedChange={setIsDarkMode}
+                onCheckedChange={toggleDarkMode} // Use global toggleDarkMode
               />
             </div>
             

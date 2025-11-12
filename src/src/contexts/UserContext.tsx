@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { UserAccount, getCurrentUser, updateUser, logoutUser } from '../lib/hybridAccountManager';
+import { apiClient } from '../lib/apiClient'; // Import apiClient
 
 type UserContextType = {
   currentUser: UserAccount | null;
@@ -16,10 +17,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load current user from localStorage
-    const user = getCurrentUser();
-    setCurrentUser(user);
-    setIsLoading(false);
+    const initializeUser = async () => {
+      const storedUser = getCurrentUser();
+      if (storedUser) {
+        // Attempt to verify the user with the backend
+        try {
+          const verifiedUser = await apiClient.getUser(storedUser.id); // Assuming getUser verifies token
+          setCurrentUser(verifiedUser);
+        } catch (error) {
+          console.error("Failed to verify user with backend, logging out:", error);
+          logoutUser(); // Clear invalid token
+          setCurrentUser(null);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initializeUser();
   }, []);
 
   const setUser = (user: UserAccount | null) => {
