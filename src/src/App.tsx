@@ -51,30 +51,44 @@ function AppContent() {
     }
   };
 
+  const handleStartGame = (difficulty: string) => {
+    setGameDifficulty(difficulty);
+  };
+
+  const handleJoinRoom = (roomId: string) => {
+    setCurrentRoomId(roomId);
+    setCurrentPage('mplobby');
+  };
+
+  const handleCreateRoom = (roomId: string) => {
+    setCurrentRoomId(roomId);
+    setCurrentPage('mplobby');
+  };
+
   const renderPage = () => {
     switch (currentPage) {
-      case 'play':
-        return <PlayPage onNavigate={handleNavigate} setGameDifficulty={setGameDifficulty} />;
       case 'game':
-        return <GamePage difficulty={gameDifficulty} />;
+        return <GamePage onNavigate={handleNavigate} currentPage={currentPage} boardStyle={currentUser?.boardStyle || 'classic'} difficulty={gameDifficulty} />;
       case 'botgame':
-        return <BotGamePage difficulty={gameDifficulty} />;
+        return <BotGamePage onNavigate={handleNavigate} currentPage={currentPage} boardStyle={currentUser?.boardStyle || 'classic'} difficulty={gameDifficulty} />;
       case 'mplobby':
-        return <MultiplayerLobbyPage onNavigate={handleNavigate} setCurrentRoomId={setCurrentRoomId} />;
+        return <MultiplayerLobbyPage onNavigate={handleNavigate} currentPage={currentPage} roomId={currentRoomId} />;
       case 'mpgame':
-        return <MultiplayerGamePage roomId={currentRoomId} />;
+        return <MultiplayerGamePage onNavigate={handleNavigate} currentPage={currentPage} roomId={currentRoomId} boardStyle={currentUser?.boardStyle || 'classic'} />;
       case 'leaderboard':
-        return <LeaderboardPage />;
+        return <LeaderboardPage onNavigate={handleNavigate} currentPage={currentPage} />;
       case 'challenge':
-        return <ChallengePage />;
+        return <ChallengePage onNavigate={handleNavigate} currentPage={currentPage} onStartGame={handleStartGame} onJoinRoom={handleJoinRoom} onCreateRoom={handleCreateRoom} />;
+      case 'play':
+        return <PlayPage onNavigate={handleNavigate} currentPage={currentPage} onStartGame={handleStartGame} />;
       case 'friends':
-        return <FriendsPage />;
+        return <FriendsPage onNavigate={handleNavigate} currentPage={currentPage} onJoinRoom={handleJoinRoom} />;
       case 'settings':
-        return <SettingsPage onBoardStyleChange={handleBoardStyleChange} />;
+        return <SettingsPage onNavigate={handleNavigate} currentPage={currentPage} onBoardStyleChange={handleBoardStyleChange} />;
       case 'faq':
-        return <FAQPage />;
+        return <FAQPage onNavigate={handleNavigate} currentPage={currentPage} />;
       default:
-        return <PlayPage onNavigate={handleNavigate} setGameDifficulty={setGameDifficulty} />;
+        return <PlayPage onNavigate={handleNavigate} currentPage={currentPage} onStartGame={handleStartGame} />;
     }
   };
 

@@ -116,11 +116,14 @@ class APIClient {
     try {
       const response = await fetch(url, defaultOptions);
       
-      if (this.setBackendStatusCallback) {
-        if (!response.ok) {
+      if (!response.ok) {
+        // Only mark as unresponsive for non-auth related errors
+        if (this.setBackendStatusCallback && response.status !== 401 && response.status !== 403) {
           console.log(`API Client: Backend returned non-OK status ${response.status}. Marking as unresponsive.`);
           this.setBackendStatusCallback(true); 
-        } else {
+        }
+      } else {
+        if (this.setBackendStatusCallback) {
           console.log('API Client: Backend responsive (successful fetch).');
           this.setBackendStatusCallback(false); 
         }
@@ -129,20 +132,16 @@ class APIClient {
       if (!response.ok) {
         if (response.status === 401) {
           console.error('Authentication error. Logging out.');
+          // Optionally, clear token and redirect to login here if it's a global auth failure
         }
+        let errorData;
         try {
-          const error = await response.json();
-          throw new Error(error.message || `HTTP ${response.status}`);
-        } catch (jsonError: any) {
-          // If parsing JSON fails, it means the response was not valid JSON.
-          // This often happens when the server returns HTML for an error, or is misconfigured.
-          // Treat this as an unresponsive state if the original response was not OK.
-          if (this.setBackendStatusCallback) {
-            console.log('API Client: Backend returned non-JSON error. Marking as unresponsive.');
-            this.setBackendStatusCallback(true); 
-          }
-          throw new Error(`Request failed: Invalid response from server.`);
+          errorData = await response.json();
+        } catch (e) {
+          // If response is not JSON, create a generic error message
+          throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
         }
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       return await response.json();
