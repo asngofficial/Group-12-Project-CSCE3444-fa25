@@ -7,8 +7,9 @@ import { PageWrapper } from "./PageWrapper";
 import { Users, Copy, Check, Crown, ArrowLeft, Play, Loader2 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { getRoom, leaveRoom, setPlayerReady, startRoom, MultiplayerRoom } from "../lib/hybridAccountManager";
-import { socket } from "../lib/socket";
+import { socket, connectSocket, disconnectSocket } from "../lib/socket";
 import { toast } from "sonner";
+import { apiClient } from "../lib/apiClient"; // Corrected Import apiClient
 
 type MultiplayerLobbyPageProps = {
   onNavigate: (page: string, options?: { roomId?: string }) => void;
@@ -33,13 +34,26 @@ export function MultiplayerLobbyPage({ onNavigate, roomId }: MultiplayerLobbyPag
     }
   }, [currentUser, roomId, onNavigate]);
 
+  const handleKickPlayer = useCallback(async (playerIdToKick: string) => {
+    if (currentUser && room && room.hostId === currentUser.id) {
+      try {
+        await apiClient.kickPlayer(room.id, playerIdToKick);
+        toast.success("Player kicked successfully.");
+      } catch (error) {
+        toast.error("Failed to kick player.");
+        console.error("Failed to kick player:", error);
+      }
+    }
+  }, [currentUser, room]);
+
   useEffect(() => {
     if (!currentUser) {
       onNavigate('play');
       return;
     }
 
-    socket.connect();
+    // Connect socket and emit user:connected
+    connectSocket(currentUser.id);
     socket.emit('room:join', roomId);
 
     const initialLoad = async () => {
@@ -57,13 +71,22 @@ export function MultiplayerLobbyPage({ onNavigate, roomId }: MultiplayerLobbyPag
 
     const onRoomUpdate = (updatedRoom: MultiplayerRoom) => setRoom(updatedRoom);
     const onGameStart = () => onNavigate('mpgame', { roomId });
+    const onYouWereKicked = ({ roomId: kickedRoomId }: { roomId: string }) => {
+      if (kickedRoomId === roomId) {
+        toast.error("You were kicked from the room.");
+        onNavigate('challenge');
+      }
+    };
     
     socket.on('room:update', onRoomUpdate);
     socket.on('game:start', onGameStart);
+    socket.on('room:you_were_kicked', onYouWereKicked);
 
     return () => {
       socket.off('room:update', onRoomUpdate);
       socket.off('game:start', onGameStart);
+      socket.off('room:you_were_kicked', onYouWereKicked);
+      disconnectSocket(); // Disconnect socket on component unmount
     };
   }, [roomId, currentUser, onNavigate, handleLeave]);
 
@@ -190,6 +213,16 @@ export function MultiplayerLobbyPage({ onNavigate, roomId }: MultiplayerLobbyPag
                         )}
                         {player.userId === currentUser?.id && (
                           <Badge variant="secondary" className="text-xs">You</Badge>
+                        )}
+                        {isHost && player.userId !== currentUser?.id && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleKickPlayer(player.userId)}
+                            className="ml-auto"
+                          >
+                            Kick
+                          </Button>
                         )}
                       </div>
                     </div>

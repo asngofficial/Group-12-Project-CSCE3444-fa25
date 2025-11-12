@@ -252,6 +252,13 @@ class APIClient {
     });
   }
 
+  async kickPlayer(roomId: string, kickedPlayerId: string): Promise<void> {
+    return this.request<void>(`/api/rooms/${roomId}/kick`, {
+      method: 'POST',
+      body: JSON.stringify({ kickedPlayerId }),
+    });
+  }
+
   // Notifications endpoints
   async getNotifications(userId: string): Promise<Notification[]> {
     return this.request<Notification[]>(`/api/notifications/${userId}`);

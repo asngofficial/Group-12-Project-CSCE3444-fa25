@@ -25,6 +25,19 @@
       "profileColor": "#4e0ee",
       "friends": [],
       "createdAt": "2025-11-11T21:58:22.322Z"
+    },
+    {
+      "id": "user_htcugjok",
+      "username": "host",
+      "password": "$2b$10$/AlPgKLktrhEiE75.xDPzexVXHjXYhvLSAfI2YO7OvZbNpzJdvAZm",
+      "email": null,
+      "xp": 0,
+      "level": 1,
+      "solvedPuzzles": 0,
+      "averageTime": "0s",
+      "profileColor": "#4d81a1",
+      "friends": [],
+      "createdAt": "2025-11-12T04:25:17.797Z"
     }
   ],
   "rooms": [
@@ -154,6 +167,677 @@
       },
       "status": "waiting",
       "createdAt": "2025-11-11T22:04:14.890Z"
+    },
+    {
+      "id": "room_aehgi2wc",
+      "code": "938662",
+      "hostId": "user_7cv3cbde",
+      "difficulty": "Easy",
+      "puzzle": [
+        [
+          2,
+          3,
+          null,
+          4
+        ],
+        [
+          1,
+          null,
+          2,
+          3
+        ],
+        [
+          3,
+          1,
+          null,
+          2
+        ],
+        [
+          4,
+          null,
+          3,
+          1
+        ]
+      ],
+      "initialPuzzle": [
+        [
+          2,
+          3,
+          null,
+          4
+        ],
+        [
+          1,
+          null,
+          2,
+          3
+        ],
+        [
+          3,
+          1,
+          null,
+          2
+        ],
+        [
+          4,
+          null,
+          3,
+          1
+        ]
+      ],
+      "solution": [
+        [
+          2,
+          3,
+          1,
+          4
+        ],
+        [
+          1,
+          4,
+          2,
+          3
+        ],
+        [
+          3,
+          1,
+          4,
+          2
+        ],
+        [
+          4,
+          2,
+          3,
+          1
+        ]
+      ],
+      "maxPlayers": 50,
+      "players": [
+        {
+          "userId": "user_7cv3cbde",
+          "username": "admin",
+          "profileColor": "#671867",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 0,
+          "isReady": false,
+          "placement": 0
+        },
+        {
+          "userId": "user_htcugjok",
+          "username": "host",
+          "profileColor": "#4d81a1",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 0,
+          "isReady": false,
+          "placement": 0
+        }
+      ],
+      "grids": {
+        "user_7cv3cbde": [
+          [
+            2,
+            3,
+            null,
+            4
+          ],
+          [
+            1,
+            null,
+            2,
+            3
+          ],
+          [
+            3,
+            1,
+            null,
+            2
+          ],
+          [
+            4,
+            null,
+            3,
+            1
+          ]
+        ],
+        "user_htcugjok": [
+          [
+            2,
+            3,
+            null,
+            4
+          ],
+          [
+            1,
+            null,
+            2,
+            3
+          ],
+          [
+            3,
+            1,
+            null,
+            2
+          ],
+          [
+            4,
+            null,
+            3,
+            1
+          ]
+        ]
+      },
+      "status": "waiting",
+      "createdAt": "2025-11-12T04:24:39.385Z"
+    },
+    {
+      "id": "room_gk9po274",
+      "code": "804763",
+      "hostId": "user_7cv3cbde",
+      "difficulty": "Easy",
+      "puzzle": [
+        [
+          3,
+          null,
+          2,
+          1
+        ],
+        [
+          1,
+          2,
+          4,
+          3
+        ],
+        [
+          null,
+          1,
+          3,
+          null
+        ],
+        [
+          2,
+          3,
+          null,
+          4
+        ]
+      ],
+      "initialPuzzle": [
+        [
+          3,
+          null,
+          2,
+          1
+        ],
+        [
+          1,
+          2,
+          4,
+          3
+        ],
+        [
+          null,
+          1,
+          3,
+          null
+        ],
+        [
+          2,
+          3,
+          null,
+          4
+        ]
+      ],
+      "solution": [
+        [
+          3,
+          4,
+          2,
+          1
+        ],
+        [
+          1,
+          2,
+          4,
+          3
+        ],
+        [
+          4,
+          1,
+          3,
+          2
+        ],
+        [
+          2,
+          3,
+          1,
+          4
+        ]
+      ],
+      "maxPlayers": 50,
+      "players": [
+        {
+          "userId": "user_7cv3cbde",
+          "username": "admin",
+          "profileColor": "#671867",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 0,
+          "isReady": false,
+          "placement": 0
+        }
+      ],
+      "grids": {
+        "user_7cv3cbde": [
+          [
+            3,
+            null,
+            2,
+            1
+          ],
+          [
+            1,
+            2,
+            4,
+            3
+          ],
+          [
+            null,
+            1,
+            3,
+            null
+          ],
+          [
+            2,
+            3,
+            null,
+            4
+          ]
+        ]
+      },
+      "status": "waiting",
+      "createdAt": "2025-11-12T04:30:58.334Z"
+    },
+    {
+      "id": "room_l5k813qz",
+      "code": "184607",
+      "hostId": "user_7cv3cbde",
+      "difficulty": "Easy",
+      "puzzle": [
+        [
+          null,
+          4,
+          1,
+          null
+        ],
+        [
+          3,
+          1,
+          4,
+          null
+        ],
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        [
+          4,
+          3,
+          2,
+          null
+        ]
+      ],
+      "initialPuzzle": [
+        [
+          null,
+          4,
+          1,
+          null
+        ],
+        [
+          3,
+          1,
+          4,
+          null
+        ],
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        [
+          4,
+          3,
+          2,
+          null
+        ]
+      ],
+      "solution": [
+        [
+          2,
+          4,
+          1,
+          3
+        ],
+        [
+          3,
+          1,
+          4,
+          2
+        ],
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        [
+          4,
+          3,
+          2,
+          1
+        ]
+      ],
+      "maxPlayers": 50,
+      "players": [
+        {
+          "userId": "user_7cv3cbde",
+          "username": "admin",
+          "profileColor": "#671867",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 0,
+          "isReady": false,
+          "placement": 0
+        }
+      ],
+      "grids": {
+        "user_7cv3cbde": [
+          [
+            null,
+            4,
+            1,
+            null
+          ],
+          [
+            3,
+            1,
+            4,
+            null
+          ],
+          [
+            1,
+            2,
+            3,
+            4
+          ],
+          [
+            4,
+            3,
+            2,
+            null
+          ]
+        ]
+      },
+      "status": "waiting",
+      "createdAt": "2025-11-12T04:31:16.708Z"
+    },
+    {
+      "id": "room_1xckvffb",
+      "code": "286943",
+      "hostId": "user_7cv3cbde",
+      "difficulty": "Easy",
+      "puzzle": [
+        [
+          2,
+          1,
+          3,
+          4
+        ],
+        [
+          null,
+          3,
+          2,
+          null
+        ],
+        [
+          null,
+          2,
+          4,
+          3
+        ],
+        [
+          3,
+          4,
+          1,
+          null
+        ]
+      ],
+      "initialPuzzle": [
+        [
+          2,
+          1,
+          3,
+          4
+        ],
+        [
+          null,
+          3,
+          2,
+          null
+        ],
+        [
+          null,
+          2,
+          4,
+          3
+        ],
+        [
+          3,
+          4,
+          1,
+          null
+        ]
+      ],
+      "solution": [
+        [
+          2,
+          1,
+          3,
+          4
+        ],
+        [
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          1,
+          2,
+          4,
+          3
+        ],
+        [
+          3,
+          4,
+          1,
+          2
+        ]
+      ],
+      "maxPlayers": 50,
+      "players": [
+        {
+          "userId": "user_7cv3cbde",
+          "username": "admin",
+          "profileColor": "#671867",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 0,
+          "isReady": false,
+          "placement": 0
+        }
+      ],
+      "grids": {
+        "user_7cv3cbde": [
+          [
+            2,
+            1,
+            3,
+            4
+          ],
+          [
+            null,
+            3,
+            2,
+            null
+          ],
+          [
+            null,
+            2,
+            4,
+            3
+          ],
+          [
+            3,
+            4,
+            1,
+            null
+          ]
+        ]
+      },
+      "status": "waiting",
+      "createdAt": "2025-11-12T04:31:51.281Z"
+    },
+    {
+      "id": "room_cix9ek8w",
+      "code": "359035",
+      "hostId": "user_7cv3cbde",
+      "difficulty": "Easy",
+      "puzzle": [
+        [
+          3,
+          2,
+          1,
+          4
+        ],
+        [
+          1,
+          null,
+          null,
+          2
+        ],
+        [
+          4,
+          null,
+          2,
+          null
+        ],
+        [
+          2,
+          1,
+          4,
+          3
+        ]
+      ],
+      "initialPuzzle": [
+        [
+          3,
+          2,
+          1,
+          4
+        ],
+        [
+          1,
+          null,
+          null,
+          2
+        ],
+        [
+          4,
+          null,
+          2,
+          null
+        ],
+        [
+          2,
+          1,
+          4,
+          3
+        ]
+      ],
+      "solution": [
+        [
+          3,
+          2,
+          1,
+          4
+        ],
+        [
+          1,
+          4,
+          3,
+          2
+        ],
+        [
+          4,
+          3,
+          2,
+          1
+        ],
+        [
+          2,
+          1,
+          4,
+          3
+        ]
+      ],
+      "maxPlayers": 50,
+      "players": [
+        {
+          "userId": "user_7cv3cbde",
+          "username": "admin",
+          "profileColor": "#671867",
+          "progress": 0,
+          "finished": false,
+          "timeElapsed": 0,
+          "isReady": false,
+          "placement": 0
+        }
+      ],
+      "grids": {
+        "user_7cv3cbde": [
+          [
+            3,
+            2,
+            1,
+            4
+          ],
+          [
+            1,
+            null,
+            null,
+            2
+          ],
+          [
+            4,
+            null,
+            2,
+            null
+          ],
+          [
+            2,
+            1,
+            4,
+            3
+          ]
+        ]
+      },
+      "status": "waiting",
+      "createdAt": "2025-11-12T04:32:43.772Z"
     }
   ],
   "friendRequests": [],

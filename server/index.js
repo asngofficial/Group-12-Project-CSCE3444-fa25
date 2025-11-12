@@ -592,6 +592,59 @@ app.post('/api/rooms/:roomId/leave', authenticateToken, async (req, res) => {
     res.status(200).json({});
 });
 
+app.post('/api/rooms/:roomId/kick', authenticateToken, async (req, res) => {
+    const { roomId } = req.params;
+    const { kickedPlayerId } = req.body;
+    const hostId = req.user.id;
+
+    await db.read();
+    const roomIndex = db.data.rooms.findIndex(r => r.id === roomId);
+    if (roomIndex === -1) return res.status(404).json({ message: 'Room not found.' });
+
+    const room = db.data.rooms[roomIndex];
+
+    // Only the host can kick players
+    if (room.hostId !== hostId) {
+        return res.status(403).json({ message: 'Only the host can kick players.' });
+    }
+
+    // Host cannot kick themselves
+    if (kickedPlayerId === hostId) {
+        return res.status(400).json({ message: 'Host cannot kick themselves.' });
+    }
+
+    const playerIndex = room.players.findIndex(p => p.userId === kickedPlayerId);
+    if (playerIndex === -1) {
+        return res.status(404).json({ message: 'Player not found in this room.' });
+    }
+
+    // Remove player from the room
+    room.players.splice(playerIndex, 1);
+    delete room.grids[kickedPlayerId];
+
+    // If the room becomes empty, remove it
+    if (room.players.length === 0) {
+        db.data.rooms.splice(roomIndex, 1);
+    } else {
+        // If the kicked player was the host (should be prevented by above check, but as a safeguard)
+        // This logic is mostly for 'leave' but good to have for robustness
+        if (room.hostId === kickedPlayerId) {
+            room.hostId = room.players[0].userId; // Assign new host
+        }
+        io.to(roomId).emit('room:update', room); // Notify remaining players
+    }
+
+    await db.write();
+
+    // Notify the kicked player if they are still connected
+    const kickedPlayerSocketId = userSocketMap.get(kickedPlayerId);
+    if (kickedPlayerSocketId) {
+        io.to(kickedPlayerSocketId).emit('room:you_were_kicked', { roomId });
+    }
+
+    res.status(200).json({ message: 'Player kicked successfully.' });
+});
+
 app.post('/api/rooms/:roomId/ready', authenticateToken, async (req, res) => {
     const { roomId } = req.params;
     const { userId, isReady } = req.body;
@@ -712,8 +765,7 @@ const calculatePlacements = (room) => {
 };
 
 const rematchMap = new Map(); // Maps old room ID to new room ID
-
-
+const userSocketMap = new Map(); // Maps userId to socket.id
 
 const isGridCorrect = (playerGrid, solution) => {
 
@@ -763,6 +815,12 @@ const isGridCorrect = (playerGrid, solution) => {
 
 io.on('connection', (socket) => {
   console.log('a user connected');
+
+  socket.on('user:connected', (userId) => {
+    userSocketMap.set(userId, socket.id);
+    console.log(`User ${userId} connected with socket ${socket.id}`);
+  });
+
   socket.on('room:join', (roomId) => {
     socket.join(roomId);
     console.log(`Socket ${socket.id} joined room ${roomId}`);
@@ -819,7 +877,7 @@ io.on('connection', (socket) => {
 
     if (newRoomId) {
       const newRoom = db.data.rooms.find(r => r.id === newRoomId);
-      if (newRoom && !newRoom.players.some(p => p.userId === user.id)) {
+      if (newRoom && !newRoom.players.some(p => p.id === user.id)) {
         newRoom.players.push({ 
           userId: user.id, 
           username: user.username, 
@@ -867,6 +925,14 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
+    // Remove user from userSocketMap on disconnect
+    for (let [userId, socketId] of userSocketMap.entries()) {
+      if (socketId === socket.id) {
+        userSocketMap.delete(userId);
+        console.log(`User ${userId} disconnected`);
+        break;
+      }
+    }
   });
 });
 
