@@ -1,9 +1,12 @@
+import { Achievement, ACHIEVEMENTS } from "./achievements";
+import * as bcrypt from 'bcryptjs';
+
 // Account Management System using localStorage
 
 export type UserAccount = {
   id: string;
   username: string;
-  password: string; // In production, this should be hashed
+  password: string; // This is now a hash
   profileColor?: string; // Color for avatar background
   profilePicture?: string; // Base64 encoded image or URL
   createdAt: number;
@@ -19,7 +22,7 @@ export type UserAccount = {
     darkMode: boolean;
   };
   friends: string[]; // Array of user IDs
-  achievements: string[];
+  achievements: Achievement[];
 };
 
 export type Challenge = {
@@ -130,11 +133,13 @@ export function createAccount(username: string, password: string): { success: bo
     return { success: false, message: 'Username already exists' };
   }
 
-  // Create new user
+  const salt = bcrypt.genSaltSync(10);
+  const hashedPassword = bcrypt.hashSync(password, salt);
+
   const newUser: UserAccount = {
     id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     username,
-    password, // In production, hash this
+    password: hashedPassword,
     profileColor: '#6366f1', // Default indigo color
     createdAt: Date.now(),
     xp: 0,
@@ -166,7 +171,9 @@ export function login(username: string, password: string): { success: boolean; m
     return { success: false, message: 'Username not found' };
   }
 
-  if (user.password !== password) {
+  const passwordIsValid = bcrypt.compareSync(password, user.password);
+
+  if (!passwordIsValid) {
     return { success: false, message: 'Incorrect password' };
   }
 
@@ -308,12 +315,15 @@ export function initializeDemoData(): void {
   const users = getAllUsers();
   
   if (users.length === 0) {
+    const salt = bcrypt.genSaltSync(10);
+    const demoPasswordHash = bcrypt.hashSync('demo123', salt);
+
     // Create some demo accounts
     const demoUsers: UserAccount[] = [
       {
         id: 'user_demo1',
         username: 'PuzzleMaster (bot)',
-        password: 'demo123',
+        password: demoPasswordHash,
         createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
         xp: 15420,
         level: 28,
@@ -323,12 +333,12 @@ export function initializeDemoData(): void {
         boardStyle: 'ocean',
         preferences: { notifications: true, sound: true, darkMode: false },
         friends: ['user_demo2', 'user_demo3'],
-        achievements: ['speed_demon', 'puzzle_master', 'perfect_score'],
+        achievements: [ACHIEVEMENTS.SPEED_DEMON, ACHIEVEMENTS.PUZZLE_MASTER, ACHIEVEMENTS.ZERO_MISTAKES],
       },
       {
         id: 'user_demo2',
         username: 'SudokuPro (bot)',
-        password: 'demo123',
+        password: demoPasswordHash,
         createdAt: Date.now() - 60 * 24 * 60 * 60 * 1000,
         xp: 14890,
         level: 27,
@@ -338,12 +348,12 @@ export function initializeDemoData(): void {
         boardStyle: 'classic',
         preferences: { notifications: true, sound: true, darkMode: false },
         friends: ['user_demo1', 'user_demo3'],
-        achievements: ['speed_demon', 'puzzle_master'],
+        achievements: [ACHIEVEMENTS.SPEED_DEMON, ACHIEVEMENTS.PUZZLE_MASTER],
       },
       {
         id: 'user_demo3',
         username: 'GridGuru (bot)',
-        password: 'demo123',
+        password: demoPasswordHash,
         createdAt: Date.now() - 45 * 24 * 60 * 60 * 1000,
         xp: 13560,
         level: 25,
@@ -353,12 +363,12 @@ export function initializeDemoData(): void {
         boardStyle: 'forest',
         preferences: { notifications: true, sound: false, darkMode: false },
         friends: ['user_demo1', 'user_demo2'],
-        achievements: ['puzzle_master'],
+        achievements: [ACHIEVEMENTS.PUZZLE_MASTER],
       },
       {
         id: 'user_demo4',
         username: 'QuickSolver (bot)',
-        password: 'demo123',
+        password: demoPasswordHash,
         createdAt: Date.now() - 20 * 24 * 60 * 60 * 1000,
         xp: 8940,
         level: 18,
@@ -368,12 +378,12 @@ export function initializeDemoData(): void {
         boardStyle: 'sunset',
         preferences: { notifications: true, sound: true, darkMode: false },
         friends: [],
-        achievements: ['speed_demon'],
+        achievements: [ACHIEVEMENTS.SPEED_DEMON],
       },
       {
         id: 'user_demo5',
         username: 'NumberNinja (bot)',
-        password: 'demo123',
+        password: demoPasswordHash,
         createdAt: Date.now() - 15 * 24 * 60 * 60 * 1000,
         xp: 6730,
         level: 15,
@@ -760,4 +770,45 @@ export function acceptGameChallenge(notificationId: string): { roomId?: string }
   }
   
   return {};
+}
+
+export function checkAndGrantAchievementsOnPuzzleSolve(
+  userId: string,
+  timeTakenSeconds: number,
+  mistakes: number
+) {
+  const user = getUserById(userId);
+  if (!user) return;
+
+  const newAchievements: Achievement[] = [];
+
+  // Example: Speed Demon
+  if (
+    timeTakenSeconds < 120 &&
+    !user.achievements.includes(ACHIEVEMENTS.SPEED_DEMON)
+  ) {
+    newAchievements.push(ACHIEVEMENTS.SPEED_DEMON);
+  }
+
+  // Zero Mistakes
+  if (
+    mistakes === 0 &&
+    !user.achievements.includes(ACHIEVEMENTS.ZERO_MISTAKES)
+  ) {
+    newAchievements.push(ACHIEVEMENTS.ZERO_MISTAKES);
+  }
+
+  // Puzzle Master: maybe if they solved X puzzles total
+  if (
+    user.solvedPuzzles + 1 >= 50 && // example threshold
+    !user.achievements.includes(ACHIEVEMENTS.PUZZLE_MASTER)
+  ) {
+    newAchievements.push(ACHIEVEMENTS.PUZZLE_MASTER);
+  }
+
+  if (newAchievements.length > 0) {
+    updateUser(userId, {
+      achievements: [...user.achievements, ...newAchievements],
+    });
+  }
 }
