@@ -19,31 +19,20 @@ export function LoginForm() {
   const { setUser } = useUser();
   const { isDarkMode, toggleDarkMode } = useTheme(); // Use global theme context
   
-  const handleBypass = () => {
-    // Create a demo user and log in directly
-    const demoUser = {
-      id: `demo_${Date.now()}`,
-      username: `Guest_${Math.floor(Math.random() * 9999)}`,
-      password: 'demo',
-      xp: 0,
-      level: 1,
-      solvedPuzzles: 0,
-      wins: 0,
-      averageTime: '0:00',
-      boardStyle: 'classic',
-      profileColor: '#6366f1',
-      createdAt: Date.now(),
-      preferences: {
-        notifications: true,
-        sound: true,
-        darkMode: isDarkMode, // Use global isDarkMode
-      },
-      friends: [],
-      achievements: [],
-    };
-    
-    setUser(demoUser);
-    toast.success("Welcome, Guest! You're in demo mode.");
+  const handleBypass = async () => {
+    const guestUsername = `Guest_${Math.floor(Math.random() * 99999)}`;
+    const guestPassword = 'guestpassword'; // A default password for guest accounts
+
+    try {
+      // Register the guest user
+      await registerUser(guestUsername, guestPassword);
+      // Log in the newly created guest user
+      const user = await loginUser(guestUsername, guestPassword);
+      setUser(user);
+      toast.success(`Welcome, ${guestUsername}! You're in guest mode.`);
+    } catch (error: any) {
+      setError(error.message || "Failed to create guest account.");
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -157,6 +146,14 @@ export function LoginForm() {
               >
                 {isRegistering ? 'Already have an account? Login' : 'Create New Account'}
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleBypass}
+              >
+                Guest Mode
+              </Button>
             </div>
           </form>
           
@@ -164,10 +161,7 @@ export function LoginForm() {
             <p className="text-sm text-muted-foreground">
               Ready to challenge your friends? 🎯
             </p>
-            <div className="text-xs text-muted-foreground space-y-1">
-              <p className="font-medium">Test with bot accounts (password: demo123):</p>
-              <p>PuzzleMaster (bot), SudokuPro (bot), GridGuru (bot)</p>
-            </div>
+
           </div>
 
           {/* Dark Mode Toggle */}
@@ -186,17 +180,7 @@ export function LoginForm() {
               />
             </div>
             
-            {/* Bypass Button for Figma/Testing */}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleBypass}
-              className="w-full text-xs text-muted-foreground hover:text-foreground"
-            >
-              <Zap className="h-3 w-3 mr-1" />
-              Quick Demo (Skip Login)
-            </Button>
+
           </div>
         </CardContent>
       </Card>

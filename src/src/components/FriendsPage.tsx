@@ -8,7 +8,7 @@ import { PageWrapper } from "./PageWrapper";
 import { Users, UserPlus, Check, X, Search, Trophy, Bell, Swords } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { useUser } from "../contexts/UserContext";
-import { getAllUsers, getFriends, UserAccount, sendFriendRequest, getNotifications, getUnreadNotificationCount, acceptFriendRequest, rejectFriendRequest, getFriendRequests, Notification, removeFriend, getUserById } from "../lib/hybridAccountManager";
+import { getAllUsers, getFriends, UserAccount, sendFriendRequest, getNotifications, getUnreadNotificationCount, acceptFriendRequest, rejectFriendRequest, getFriendRequests, Notification, removeFriend, getUserById, acceptChallenge, declineChallenge } from "../lib/hybridAccountManager";
 import type { FriendRequest as APIFriendRequest } from "../lib/apiClient";
 import { toast } from "sonner";
 
@@ -29,6 +29,8 @@ export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPage
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [friendRequests, setFriendRequests] = useState<APIFriendRequest[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const [activeTab, setActiveTab] = useState("friends");
 
   useEffect(() => {
     if (currentUser) {
@@ -83,6 +85,7 @@ export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPage
     if (currentUser) {
       try {
         const userNotifications = await getNotifications(currentUser.id);
+        console.log("User Notifications:", userNotifications); // Re-added console.log
         setNotifications(userNotifications);
         const count = getUnreadNotificationCount(currentUser.id);
         setUnreadCount(count);
@@ -140,20 +143,27 @@ export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPage
     }
   };
 
-  const handleAcceptGameChallenge = async (roomId: string) => {
-    toast.success("Challenge accepted! Joining game...");
-    if (onJoinRoom) {
-      onJoinRoom(roomId);
+  const handleAcceptGameChallenge = async (challengeId: string) => {
+    try {
+      const room = await acceptChallenge(challengeId);
+      toast.success("Challenge accepted! Joining game...");
+      if (onJoinRoom) {
+        onJoinRoom(room.id);
+      }
+      await loadNotifications();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to accept challenge");
     }
-    await loadNotifications();
   };
 
-  const handleDeclineGameChallenge = async (notificationId: string) => {
-    // Mark as read
-    const { markNotificationRead } = await import("../lib/hybridAccountManager");
-    await markNotificationRead(notificationId);
-    toast.info("Challenge declined");
-    await loadNotifications();
+  const handleDeclineGameChallenge = async (challengeId: string) => {
+    try {
+      await declineChallenge(challengeId);
+      toast.info("Challenge declined");
+      await loadNotifications();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to decline challenge");
+    }
   };
 
   const getNotificationIcon = (type: Notification['type']) => {
@@ -199,14 +209,14 @@ export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPage
 
       {/* Content */}
       <div className="flex-1 pb-20 overflow-auto">
-        <Tabs defaultValue="friends" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full grid grid-cols-3 mx-auto max-w-sm sticky top-0 bg-background z-10">
             <TabsTrigger value="friends">
               My Friends ({friends.length})
             </TabsTrigger>
             <TabsTrigger value="add">Add Friends</TabsTrigger>
             <TabsTrigger value="notifications" className="relative">
-              Notifications
+              Inbox
               {unreadCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -224,7 +234,7 @@ export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPage
                 <p className="text-sm text-muted-foreground mb-4">
                   Add friends to compete and compare scores
                 </p>
-                <Button onClick={() => document.querySelector<HTMLElement>('[value="add"]')?.click()}>
+                <Button onClick={() => setActiveTab("add")}>
                   <UserPlus className="h-4 w-4 mr-2" />
                   Add Friends
                 </Button>
@@ -480,7 +490,7 @@ export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPage
                           <div className="flex gap-2">
                             <Button
                               size="sm"
-                              onClick={() => handleAcceptFriendRequest(notification.id, notification.fromUserId)}
+                              onClick={() => handleAcceptFriendRequest(notification.id)}
                               className="flex-1"
                             >
                               <Check className="h-3 w-3 mr-1" />
@@ -511,7 +521,7 @@ export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPage
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleDeclineGameChallenge(notification.id)}
+                              onClick={() => handleDeclineGameChallenge(notification.relatedId!)}
                               className="flex-1"
                             >
                               <X className="h-3 w-3 mr-1" />

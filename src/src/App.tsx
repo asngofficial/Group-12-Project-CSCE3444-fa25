@@ -28,6 +28,7 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('play');
   const [gameDifficulty, setGameDifficulty] = useState<string>('Medium');
   const [currentRoomId, setCurrentRoomId] = useState<string>('');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const deviceType = useDeviceType();
 
   useEffect(() => {
@@ -63,6 +64,10 @@ function AppContent() {
   const handleCreateRoom = (roomId: string) => {
     setCurrentRoomId(roomId);
     setCurrentPage('mplobby');
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
   const renderPage = () => {
@@ -109,8 +114,8 @@ function AppContent() {
       {/* Desktop layout with sidebar */}
       {deviceType === 'desktop' && (
         <div className="flex h-screen bg-background">
-          <DesktopNav onNavigate={handleNavigate} currentPage={currentPage} />
-          <div className="flex-1 overflow-auto">
+          <DesktopNav onNavigate={handleNavigate} currentPage={currentPage} isCollapsed={isSidebarCollapsed} toggleSidebar={toggleSidebar} />
+          <div className={`flex-1 overflow-auto transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
             {renderPage()}
           </div>
         </div>
@@ -206,9 +211,11 @@ export default function App() {
       {/* Loading Overlay */}
       {isBackendUnresponsive && (
         <div className="fixed inset-0 bg-background/30 backdrop-blur-xs flex items-center justify-center z-50">
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card p-6 rounded-lg shadow-lg w-[700px] h-[300px] flex flex-col items-center justify-center backdrop-blur-sm glow-opposite-theme">
-                                          <Loader2 className="h-12 w-12 custom-spin text-primary mx-auto mb-4" />
-                                          <p className="text-foreground text-lg whitespace-nowrap w-[640px] overflow-hidden font-bold">              Please wait, as the server initializes<span className="inline-block w-[18px] text-left">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card p-6 rounded-lg shadow-lg w-[700px] h-[300px] flex flex-col items-center justify-center backdrop-blur-sm glow-opposite-theme">
+            <Loader2 className="h-12 w-12 custom-spin text-primary mx-auto mb-4" />
+            <p className="text-foreground text-lg whitespace-nowrap w-[640px] overflow-hidden font-bold">
+              Please wait, as the server initializes
+              <span className="inline-block w-[18px] text-left">
                 {Array(3).fill(null).map((_, i) => (
                   <span key={i}>{i < dots ? '.' : '\u00A0'}</span> // Use non-breaking space for invisible dots
                 ))}
@@ -220,7 +227,7 @@ export default function App() {
       )}
       <UserProvider>
         <ThemeProvider>
-          <AppContent />
+          {!isBackendUnresponsive && <AppContent />}
           <Toaster richColors position="top-center" />
         </ThemeProvider>
       </UserProvider>

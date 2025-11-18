@@ -160,10 +160,18 @@ export async function getFriendRequests(userId: string): Promise<FriendRequest[]
 }
 
 // Actions (no cache fallback, just do it)
-export const sendFriendRequest = apiClient.sendFriendRequest;
-export const acceptFriendRequest = apiClient.acceptFriendRequest;
-export const rejectFriendRequest = apiClient.rejectFriendRequest;
-export const removeFriend = apiClient.removeFriend;
+export function sendFriendRequest(fromUserId: string, toUsername: string): Promise<FriendRequest> {
+  return apiClient.sendFriendRequest(fromUserId, toUsername);
+}
+export function acceptFriendRequest(requestId: string): Promise<void> {
+  return apiClient.acceptFriendRequest(requestId);
+}
+export function rejectFriendRequest(requestId: string): Promise<void> {
+  return apiClient.rejectFriendRequest(requestId);
+}
+export function removeFriend(userId: string, friendId: string): Promise<void> {
+  return apiClient.removeFriend(userId, friendId);
+}
 
 
 // =================================
@@ -216,7 +224,9 @@ export async function leaveRoom(roomId: string, userId: string): Promise<void> {
   return apiClient.leaveRoom(roomId, userId);
 }
 export async function getRoom(roomId: string): Promise<MultiplayerRoom> {
-  return apiClient.getRoom(roomId);
+  const room = await apiClient.getRoom(roomId);
+  console.log("getRoom returned:", JSON.stringify(room, null, 2));
+  return room;
 }
 export async function startRoom(roomId: string): Promise<MultiplayerRoom> {
   return apiClient.startRoom(roomId);
@@ -238,14 +248,18 @@ export async function createPuzzle(title: string, difficulty: string, grid: (num
 export async function getUserChallenges(userId: string): Promise<Challenge[]> {
   return apiClient.getUserChallenges(userId);
 }
-export async function sendGameChallenge(toUserId: string, difficulty: string): Promise<Challenge> {
-  return apiClient.sendGameChallenge(toUserId, difficulty);
+export async function sendGameChallenge(toUserId: string, difficulty: string, roomId: string): Promise<Challenge> {
+  return apiClient.sendGameChallenge(toUserId, difficulty, roomId);
 }
 export async function acceptChallenge(challengeId: string): Promise<MultiplayerRoom> {
   return apiClient.acceptChallenge(challengeId);
 }
 export async function declineChallenge(challengeId: string): Promise<void> {
   return apiClient.declineChallenge(challengeId);
+}
+
+export async function removeChallenge(challengeId: string): Promise<void> {
+  return apiClient.removeChallenge(challengeId);
 }
 
 export async function getUnreadNotificationCount(userId: string): Promise<number> {

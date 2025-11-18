@@ -1,9 +1,10 @@
-import { Play, Swords, Users, Settings } from "lucide-react";
+import { Play, Swords, Users, Settings, Menu, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { useUser } from "../contexts/UserContext";
 import { getUnreadNotificationCount } from "../lib/hybridAccountManager";
 import { useState, useEffect } from "react";
+import { Button } from "./ui/button";
 
 type NavItem = {
   id: string;
@@ -37,10 +38,12 @@ const navItems: NavItem[] = [
 type DesktopNavProps = {
   onNavigate: (page: string) => void;
   currentPage: string;
+  isCollapsed: boolean;
+  toggleSidebar: () => void;
   onJoinRoom?: (roomId: string) => void;
 };
 
-export function DesktopNav({ onNavigate, currentPage, onJoinRoom }: DesktopNavProps) {
+export function DesktopNav({ onNavigate, currentPage, isCollapsed, toggleSidebar, onJoinRoom }: DesktopNavProps) {
   const { currentUser } = useUser();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -57,19 +60,23 @@ export function DesktopNav({ onNavigate, currentPage, onJoinRoom }: DesktopNavPr
     };
 
     fetchCount(); // Initial fetch
-    // Removed: const interval = setInterval(fetchCount, 10000); // Poll every 10 seconds
-
-    // Removed: return () => clearInterval(interval);
   }, [currentUser]);
 
   if (!currentUser) return null;
 
   return (
-    <div className="w-64 h-screen bg-card border-r flex flex-col">
+    <div className={`h-screen bg-card border-r flex flex-col transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
       {/* Header */}
-      <div className="p-6 border-b">
-        <h1 className="text-2xl mb-1">Sudoku</h1>
-        <p className="text-sm text-muted-foreground">Competitive Puzzles</p>
+      <div className="p-4 border-b flex items-center justify-between">
+        {!isCollapsed && (
+          <div>
+            <h1 className="text-2xl mb-1">Sudoku</h1>
+            <p className="text-sm text-muted-foreground">Competitive Puzzles</p>
+          </div>
+        )}
+        <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+          {isCollapsed ? <Menu /> : <X />}
+        </Button>
       </div>
 
       {/* User Profile */}
@@ -84,16 +91,20 @@ export function DesktopNav({ onNavigate, currentPage, onJoinRoom }: DesktopNavPr
               {currentUser.username[0].toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="truncate">{currentUser.username}</p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <Badge variant="secondary" className="text-xs">Level {currentUser.level}</Badge>
+          {!isCollapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="truncate">{currentUser.username}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <Badge variant="secondary" className="text-xs">Level {currentUser.level}</Badge>
+              </div>
             </div>
+          )}
+        </div>
+        {!isCollapsed && (
+          <div className="mt-3 text-sm text-muted-foreground">
+            {currentUser.xp.toLocaleString()} XP
           </div>
-        </div>
-        <div className="mt-3 text-sm text-muted-foreground">
-          {currentUser.xp.toLocaleString()} XP
-        </div>
+        )}
       </div>
 
       {/* Navigation */}
@@ -107,11 +118,11 @@ export function DesktopNav({ onNavigate, currentPage, onJoinRoom }: DesktopNavPr
                 currentPage === id 
                   ? 'bg-primary text-primary-foreground' 
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
+              } ${isCollapsed ? 'justify-center' : ''}`}
             >
               <Icon className="h-5 w-5" />
-              <span>{label}</span>
-              {id === 'friends' && unreadCount > 0 && (
+              {!isCollapsed && <span>{label}</span>}
+              {id === 'friends' && unreadCount > 0 && !isCollapsed && (
                 <Badge className="ml-auto h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </Badge>
@@ -122,22 +133,24 @@ export function DesktopNav({ onNavigate, currentPage, onJoinRoom }: DesktopNavPr
       </nav>
 
       {/* Footer Stats */}
-      <div className="p-4 border-t">
-        <div className="grid grid-cols-3 gap-2 text-center text-sm">
-          <div>
-            <p className="text-lg">{currentUser.solvedPuzzles}</p>
-            <p className="text-xs text-muted-foreground">Solved</p>
-          </div>
-          <div>
-            <p className="text-lg">{currentUser.wins}</p>
-            <p className="text-xs text-muted-foreground">Wins</p>
-          </div>
-          <div>
-            <p className="text-lg">{currentUser.averageTime}</p>
-            <p className="text-xs text-muted-foreground">Avg</p>
+      {!isCollapsed && (
+        <div className="p-4 border-t">
+          <div className="grid grid-cols-3 gap-2 text-center text-sm">
+            <div>
+              <p className="text-lg">{currentUser.solvedPuzzles}</p>
+              <p className="text-xs text-muted-foreground">Solved</p>
+            </div>
+            <div>
+              <p className="text-lg">{currentUser.wins}</p>
+              <p className="text-xs text-muted-foreground">Wins</p>
+            </div>
+            <div>
+              <p className="text-lg">{currentUser.averageTime}</p>
+              <p className="text-xs text-muted-foreground">Avg</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

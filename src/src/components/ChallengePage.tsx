@@ -5,7 +5,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { PageWrapper } from "./PageWrapper";
-import { Swords, Users, Plus, Loader2, LogIn } from "lucide-react";
+import { Swords, Users, Plus, Loader2, LogIn, X } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { 
   getAllUsers, 
@@ -14,6 +14,8 @@ import {
   sendGameChallenge,
   createRoom,
   joinRoom,
+  declineChallenge,
+  removeChallenge,
   UserAccount,
   Challenge as ChallengeType,
 } from "../lib/hybridAccountManager";
@@ -90,12 +92,38 @@ export function ChallengePage({ onNavigate, currentPage, onStartGame, onJoinRoom
     if (!currentUser) return;
     
     try {
-      await sendGameChallenge(friendId, challengeDifficulty);
-      setShowChallengeDialog(false);
+      // 1. Create a new room
+      const { puzzle, solution } = generateSudokuGrid(challengeDifficulty);
+      const room = await createRoom(currentUser.id, challengeDifficulty, puzzle, solution, 2);
+
+      // 2. Send a game challenge notification
+      await sendGameChallenge(friendId, challengeDifficulty, room.id);
+      
+      setShowChallengeFriendDialog(false);
       toast.success("Challenge sent!");
+
+      // 3. Navigate to the multiplayer lobby
+      if (onCreateRoom) {
+        onCreateRoom(room.id);
+      } else {
+        onNavigate('mplobby', { roomId: room.id });
+      }
     } catch (err) {
       toast.error("Failed to send challenge.");
       console.error(err);
+    }
+  };
+
+  const handleRemoveChallenge = async (challengeId: string) => {
+    console.log("Attempting to remove challenge:", challengeId);
+    try {
+      await removeChallenge(challengeId);
+      setChallenges(challenges.filter(c => c.id !== challengeId));
+      toast.success("Challenge removed");
+      console.log("Challenge removed successfully:", challengeId);
+    } catch (error) {
+      toast.error("Failed to remove challenge");
+      console.error("Error removing challenge:", error);
     }
   };
 
@@ -233,13 +261,22 @@ export function ChallengePage({ onNavigate, currentPage, onStartGame, onJoinRoom
           ) : (
             <div className="space-y-2">
               <h3 className="font-medium px-1">Active Challenges</h3>
-              {challenges.map((challenge) => (
-                <Card key={challenge.id} className="p-3">
-                  {/* Display challenge info here */}
-                  <p>Challenge with user {challenge.toUserId}</p>
-                  <p>Status: {challenge.status}</p>
-                </Card>
-              ))}
+              {challenges.map((challenge) => {
+                const friend = friends.find(f => f.id === challenge.toUserId);
+                return (
+                  <Card key={challenge.id} className="p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p>Challenge with {friend?.username || 'a user'}</p>
+                        <p className="text-sm text-muted-foreground">Status: {challenge.status}</p>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => handleRemoveChallenge(challenge.id)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>

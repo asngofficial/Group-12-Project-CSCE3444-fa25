@@ -12,6 +12,7 @@ export type User = {
   profileColor?: string;
   profilePicture?: string;
   boardStyle?: string;
+  achievements?: string[];
   createdAt?: string;
 };
 
@@ -50,12 +51,25 @@ export type FriendRequest = {
 };
 
 export type Notification = {
+
   id: string;
+
   userId: string;
+
   type: 'friend_request' | 'challenge' | 'game_invite';
+
   message: string;
+
   read: boolean;
+
   createdAt: string;
+
+  relatedId?: string;
+
+  senderProfilePicture?: string; // Added
+
+  senderUsername?: string; // Added
+
 };
 
 export type Challenge = {
@@ -63,6 +77,7 @@ export type Challenge = {
   fromUserId: string;
   toUserId: string;
   difficulty: string;
+  roomId: string; // Added roomId
   status: 'pending' | 'accepted' | 'declined';
   createdAt: string;
 };
@@ -172,15 +187,15 @@ class APIClient {
   }
 
   // Auth endpoints
-  async register(username: string, password: string, email?: string): Promise<User> {
-    return this.request<User>('/api/auth/register', {
+  async register(username: string, password: string, email?: string): Promise<{ user: User; token: string; }> {
+    return this.request<{ user: User; token: string; }>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify({ username, password, email }),
     });
   }
 
-  async login(username: string, password: string): Promise<User> {
-    return this.request<User>('/api/auth/login', {
+  async login(username: string, password: string): Promise<{ user: User; token: string; }> {
+    return this.request<{ user: User; token: string; }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     });
@@ -249,10 +264,14 @@ class APIClient {
   }
 
   async joinRoom(code: string, userId: string, username: string, profileColor?: string, profilePicture?: string): Promise<Room> {
-    return this.request<Room>('/api/rooms/join', {
+    const requestBody = { code, userId, username, profileColor, profilePicture };
+    console.log("apiClient.joinRoom request body:", JSON.stringify(requestBody, null, 2));
+    const response = await this.request<Room>('/api/rooms/join', {
       method: 'POST',
-      body: JSON.stringify({ code, userId, username, profileColor, profilePicture }),
+      body: JSON.stringify(requestBody),
     });
+    console.log("apiClient.joinRoom response:", JSON.stringify(response, null, 2));
+    return response;
   }
 
   async leaveRoom(roomId: string, userId: string): Promise<void> {
@@ -324,10 +343,10 @@ class APIClient {
   }
 
   // Challenge endpoints
-  async sendGameChallenge(toUserId: string, difficulty: string): Promise<Challenge> {
+  async sendGameChallenge(toUserId: string, difficulty: string, roomId: string): Promise<Challenge> {
     return this.request<Challenge>('/api/challenges', {
       method: 'POST',
-      body: JSON.stringify({ toUserId, difficulty }),
+      body: JSON.stringify({ toUserId, difficulty, roomId }),
     });
   }
 
@@ -344,6 +363,12 @@ class APIClient {
   async declineChallenge(challengeId: string): Promise<void> {
     return this.request<void>(`/api/challenges/${challengeId}/decline`, {
       method: 'POST',
+    });
+  }
+
+  async removeChallenge(challengeId: string): Promise<void> {
+    return this.request<void>(`/api/challenges/${challengeId}`, {
+      method: 'DELETE',
     });
   }
 }

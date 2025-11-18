@@ -31,6 +31,7 @@ const db = {
       if (error.code === 'ENOENT') {
         this.data = {};
       } else {
+        console.error("DB Read: Error reading db.json:", error);
         throw error;
       }
     }
@@ -248,9 +249,8 @@ app.post('/api/friends/request', authenticateToken, async (req, res) => {
 
     await db.read();
     const toUser = db.data.users.find(u => u.username.toLowerCase() === toUsername.toLowerCase());
-    if (!toUser) return res.status(404).json({ message: 'User to add not found' });
-
     const fromUser = db.data.users.find(u => u.id === fromUserId);
+    console.log("Creating friend request notification. fromUser:", JSON.stringify(fromUser, null, 2));
 
     const newRequest = {
         id: `fr_${generateId()}`,
@@ -362,7 +362,7 @@ app.post('/api/puzzles', authenticateToken, async (req, res) => {
 // =================================
 
 app.post('/api/challenges', authenticateToken, async (req, res) => {
-    const { toUserId, difficulty } = req.body;
+    const { toUserId, difficulty, roomId } = req.body;
     const fromUserId = req.user.id;
 
     await db.read();
@@ -377,12 +377,12 @@ app.post('/api/challenges', authenticateToken, async (req, res) => {
         fromUserId,
         toUserId,
         difficulty,
+        roomId, // Store the roomId here
         status: 'pending',
         createdAt: new Date().toISOString(),
     };
     db.data.challenges.push(newChallenge);
 
-    const notificationId = `notif_${generateId()}`;
     const newNotification = {
         id: notificationId,
         userId: toUserId,
@@ -391,6 +391,8 @@ app.post('/api/challenges', authenticateToken, async (req, res) => {
         relatedId: challengeId,
         read: false,
         createdAt: new Date().toISOString(),
+        senderProfilePicture: fromUser.profilePicture, // Added
+        senderUsername: fromUser.username, // Added
     };
     db.data.notifications.push(newNotification);
     
@@ -415,26 +417,28 @@ app.post('/api/challenges/:challengeId/accept', authenticateToken, async (req, r
     const challenge = db.data.challenges[challengeIndex];
     if (challenge.toUserId !== req.user.id) return res.sendStatus(403);
 
-    const fromUser = db.data.users.find(u => u.id === challenge.fromUserId);
-    const toUser = db.data.users.find(u => u.id === challenge.toUserId);
+    // Find the room that the host created for this challenge
+    const room = db.data.rooms.find(r => r.id === challenge.roomId); // Use challenge.roomId
+    if (!room) return res.status(404).json({ message: 'Associated room not found' });
 
-    // Create a new room
-    const newRoom = {
-        id: `room_${generateId()}`,
-        code: generateRoomCode(),
-        hostId: fromUser.id,
-        difficulty: challenge.difficulty,
-        puzzle: [], // You might want to generate a puzzle here
-        solution: [],
-        maxPlayers: 2,
-        players: [
-            { userId: fromUser.id, username: fromUser.username, progress: 0, finished: false, timeElapsed: 0, isReady: false },
-            { userId: toUser.id, username: toUser.username, progress: 0, finished: false, timeElapsed: 0, isReady: false }
-        ],
-        status: 'waiting',
-        createdAt: new Date().toISOString(),
-    };
-    db.data.rooms.push(newRoom);
+    // Add the accepting user to this existing room
+    const toUser = db.data.users.find(u => u.id === challenge.toUserId);
+    if (!toUser) return res.status(404).json({ message: 'Accepting user not found' });
+
+    // Check if user is already in the room (shouldn't happen, but good to prevent duplicates)
+    if (!room.players.some(p => p.userId === toUser.id)) {
+        room.players.push({ 
+            userId: toUser.id, 
+            username: toUser.username, 
+            profileColor: toUser.profileColor,
+            progress: 0, 
+            finished: false, 
+            timeElapsed: 0, 
+            isReady: false, 
+            placement: 0 
+        });
+        room.grids[toUser.id] = JSON.parse(JSON.stringify(room.puzzle));
+    }
 
     // Clean up challenge and notification
     db.data.challenges.splice(challengeIndex, 1);
@@ -442,7 +446,8 @@ app.post('/api/challenges/:challengeId/accept', authenticateToken, async (req, r
     if (notifIndex > -1) db.data.notifications.splice(notifIndex, 1);
 
     await db.write();
-    res.status(201).json(newRoom);
+    io.to(room.id).emit('room:update', room); // Emit room:update for the existing room
+    res.status(201).json(room); // Return the updated existing room
 });
 
 app.post('/api/challenges/:challengeId/decline', authenticateToken, async (req, res) => {
@@ -814,7 +819,7 @@ const isGridCorrect = (playerGrid, solution) => {
 
 
 io.on('connection', (socket) => {
-  console.log('a user connected');
+  console.log('a user connected'); // Revert to original log
 
   socket.on('user:connected', (userId) => {
     userSocketMap.set(userId, socket.id);

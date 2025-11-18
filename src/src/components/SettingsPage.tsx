@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Card } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Switch } from "./ui/switch";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { PageWrapper } from "./PageWrapper";
-import { User, Bell, Volume2, Moon, Trophy, LogOut, Palette, Edit2, Camera, X } from "lucide-react";
+import { User, Bell, Volume2, Moon, Trophy, LogOut, Palette, Edit2, Camera, X, Check } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { BoardCustomization } from "./BoardCustomization";
 import { XPProgress } from "./XPProgress";
@@ -21,16 +20,102 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { toast } from "sonner";
+import { ACHIEVEMENTS_DEFINITIONS, AchievementName } from "../lib/achievements";
+import { ScrollArea } from "./ui/scroll-area";
 
 type SettingsPageProps = {
   onNavigate: (page: string) => void;
   currentPage: string;
 };
 
+const AchievementsDialog = ({ open, onOpenChange, earnedAchievements }: { open: boolean, onOpenChange: (open: boolean) => void, earnedAchievements: AchievementName[] }) => {
+  const allAchievementKeys = Object.keys(ACHIEVEMENTS_DEFINITIONS) as AchievementName[];
+
+  const earned = allAchievementKeys.filter(key => earnedAchievements.includes(key));
+  const locked = allAchievementKeys.filter(key => !earnedAchievements.includes(key));
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xs">
+        <DialogHeader>
+          <DialogTitle>Your Achievements</DialogTitle>
+          <DialogDescription>
+            Here are the achievements you've earned and the ones you can still unlock.
+          </DialogDescription>
+        </DialogHeader>
+        <ScrollArea className="h-[400px] pr-4">
+          {earned.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3">Earned Achievements</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {earned.map(key => {
+                  const achievement = ACHIEVEMENTS_DEFINITIONS[key];
+                  const Icon = achievement.icon;
+                  return (
+                    <div
+                      key={key}
+                      className="relative p-3 rounded-lg border-2 border-primary bg-primary/5 transition-all text-center"
+                    >
+                      <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                      <div className="flex justify-center mb-2">
+                        <div className="p-2 rounded-full bg-primary/10">
+                          <Icon className="h-8 w-8 text-primary" />
+                        </div>
+                      </div>
+                      <p className="font-semibold text-sm mb-1">{achievement.name}</p>
+                      <p className="text-xs text-muted-foreground">{achievement.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {locked.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Locked Achievements</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {locked.map(key => {
+                  const achievement = ACHIEVEMENTS_DEFINITIONS[key];
+                  const Icon = achievement.icon;
+                  return (
+                    <div
+                      key={key}
+                      className="relative p-3 rounded-lg border-2 border-border opacity-60 transition-all text-center"
+                    >
+                      <div className="flex justify-center mb-2">
+                        <div className="p-2 rounded-full bg-muted">
+                          <Icon className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                      </div>
+                      <p className="font-semibold text-sm mb-1">{achievement.name}</p>
+                      <p className="text-xs text-muted-foreground">{achievement.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {earned.length === 0 && locked.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">No achievements to display.</p>
+          )}
+        </ScrollArea>
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export function SettingsPage({ onNavigate, currentPage }: SettingsPageProps) {
   const { currentUser, updateCurrentUser, logout } = useUser();
   const [customizationOpen, setCustomizationOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [achievementsOpen, setAchievementsOpen] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [profileColor, setProfileColor] = useState('');
   const [profilePicture, setProfilePicture] = useState<string | undefined>('');
@@ -118,6 +203,9 @@ export function SettingsPage({ onNavigate, currentPage }: SettingsPageProps) {
       fileInputRef.current.value = '';
     }
   };
+
+  const earnedAchievements = (currentUser?.achievements as AchievementName[] | undefined) || [];
+  const recentAchievements = earnedAchievements.slice(-3).reverse();
 
   return (
     <PageWrapper onNavigate={onNavigate} currentPage={currentPage}>
@@ -256,32 +344,28 @@ export function SettingsPage({ onNavigate, currentPage }: SettingsPageProps) {
             </h3>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-3 p-2 bg-muted rounded-lg">
-                <div className="text-2xl">🏆</div>
-                <div className="flex-1">
-                  <p className="text-sm">Speed Demon</p>
-                  <p className="text-xs text-muted-foreground">Solve in under 5 minutes</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-2 bg-muted rounded-lg">
-                <div className="text-2xl">⭐</div>
-                <div className="flex-1">
-                  <p className="text-sm">Puzzle Master</p>
-                  <p className="text-xs text-muted-foreground">Complete 50 puzzles</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-2 bg-muted rounded-lg">
-                <div className="text-2xl">🎯</div>
-                <div className="flex-1">
-                  <p className="text-sm">Perfect Score</p>
-                  <p className="text-xs text-muted-foreground">No mistakes in a puzzle</p>
-                </div>
-              </div>
+              {recentAchievements.length > 0 ? (
+                recentAchievements.map(key => {
+                  const achievement = ACHIEVEMENTS_DEFINITIONS[key];
+                  const Icon = achievement.icon;
+                  return (
+                    <div key={key} className="flex items-center gap-3 p-2 bg-muted rounded-lg">
+                      <div className="p-1 bg-primary/10 rounded-full">
+                        <Icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{achievement.name}</p>
+                        <p className="text-xs text-muted-foreground">{achievement.description}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">No achievements yet. Keep playing!</p>
+              )}
             </div>
 
-            <Button variant="outline" className="w-full mt-3" size="sm">
+            <Button variant="outline" className="w-full mt-3" size="sm" onClick={() => setAchievementsOpen(true)}>
               View All Achievements
             </Button>
           </Card>
@@ -431,6 +515,13 @@ export function SettingsPage({ onNavigate, currentPage }: SettingsPageProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Achievements Dialog */}
+      <AchievementsDialog 
+        open={achievementsOpen}
+        onOpenChange={setAchievementsOpen}
+        earnedAchievements={earnedAchievements}
+      />
     </div>
     </PageWrapper>
   );

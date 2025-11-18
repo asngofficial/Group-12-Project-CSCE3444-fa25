@@ -165,11 +165,15 @@ export function NotificationDropdown({ onNavigate }: NotificationDropdownProps) 
                   >
                     <div className="flex items-start gap-3">
                        <Avatar className="h-8 w-8">
-                         <AvatarFallback
-                          className="text-white text-xs bg-gray-700"
-                        >
-                          {notification.message.charAt(0).toUpperCase()}
-                        </AvatarFallback>
+                         {notification.senderProfilePicture ? (
+                           <AvatarImage src={notification.senderProfilePicture} alt={notification.senderUsername || 'Sender'} />
+                         ) : (
+                           <AvatarFallback
+                            className="text-white text-xs bg-gray-700"
+                          >
+                            {notification.senderUsername ? notification.senderUsername.charAt(0).toUpperCase() : notification.message.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                         )}
                       </Avatar>
                       
                       <div className="flex-1 space-y-2">

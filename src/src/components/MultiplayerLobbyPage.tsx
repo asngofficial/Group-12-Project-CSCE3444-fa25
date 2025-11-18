@@ -22,6 +22,9 @@ export function MultiplayerLobbyPage({ onNavigate, roomId }: MultiplayerLobbyPag
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const isHost = currentUser && room && room.hostId === currentUser.id;
+  const currentPlayer = room?.players.find(p => p.userId === currentUser?.id);
+
   const handleLeave = useCallback(async () => {
     if (currentUser && roomId) {
       try {
@@ -69,8 +72,25 @@ export function MultiplayerLobbyPage({ onNavigate, roomId }: MultiplayerLobbyPag
     };
     initialLoad();
 
+    // Temporary polling for host to see joined players if socket updates are delayed
+    let pollInterval: NodeJS.Timeout;
+    if (isHost) { // Only poll if current user is host
+      pollInterval = setInterval(async () => {
+        try {
+          const updatedRoom = await getRoom(roomId);
+          setRoom(updatedRoom);
+        } catch (error) {
+          console.error("Polling for room update failed:", error);
+        }
+      }, 3000); // Poll every 3 seconds
+    }
+
     const onRoomUpdate = (updatedRoom: MultiplayerRoom) => setRoom(updatedRoom);
-    const onGameStart = () => onNavigate('mpgame', { roomId });
+    const onGameStart = () => {
+      console.log("onGameStart triggered!");
+      console.log("Navigating to mpgame with roomId:", roomId);
+      onNavigate('mpgame', { roomId });
+    };
     const onYouWereKicked = ({ roomId: kickedRoomId }: { roomId: string }) => {
       if (kickedRoomId === roomId) {
         toast.error("You were kicked from the room.");
@@ -86,9 +106,10 @@ export function MultiplayerLobbyPage({ onNavigate, roomId }: MultiplayerLobbyPag
       socket.off('room:update', onRoomUpdate);
       socket.off('game:start', onGameStart);
       socket.off('room:you_were_kicked', onYouWereKicked);
+      clearInterval(pollInterval); // Clear interval on unmount
       disconnectSocket(); // Disconnect socket on component unmount
     };
-  }, [roomId, currentUser, onNavigate, handleLeave]);
+  }, [roomId, currentUser, onNavigate, handleLeave, isHost]);
 
   const handleCopyCode = () => {
     if (room) {
@@ -115,6 +136,7 @@ export function MultiplayerLobbyPage({ onNavigate, roomId }: MultiplayerLobbyPag
 
   const handleStartGame = async () => {
     if (room && currentUser && room.hostId === currentUser.id) {
+      console.log("handleStartGame called for room:", room.id);
       if (room.players.length < 2) {
         toast.error("Need at least 2 players to start");
         return;
@@ -128,9 +150,6 @@ export function MultiplayerLobbyPage({ onNavigate, roomId }: MultiplayerLobbyPag
       }
     }
   };
-
-  const isHost = currentUser && room && room.hostId === currentUser.id;
-  const currentPlayer = room?.players.find(p => p.userId === currentUser?.id);
 
   if (loading || !room) {
     return (
