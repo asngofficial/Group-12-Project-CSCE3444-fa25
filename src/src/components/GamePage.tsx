@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { PageWrapper } from "./PageWrapper";
-import { Lightbulb, Timer, User, CheckCircle, RotateCcw, Calendar, HelpCircle } from "lucide-react";
+import { Lightbulb, Timer, User, CheckCircle, RotateCcw, Calendar, HelpCircle, LogOut } from "lucide-react";
 import { boardStyles } from "./BoardCustomization";
 import { useUser } from "../contexts/UserContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { generateSudokuGrid, getGridSize, generateDailyPuzzle, getTodayDateString } from "../utils/sudokuGenerator";
 import { XPProgress } from "./XPProgress";
 
@@ -36,60 +37,115 @@ function getDifficultyColor(difficulty: Difficulty): string {
 type GamePageProps = {
   onNavigate: (page: string) => void;
   currentPage: string;
-  boardStyle?: string;
   difficulty?: string;
+  setGameInProgress: (inProgress: boolean) => void;
 };
 
-export function GamePage({ onNavigate, currentPage, boardStyle = 'classic', difficulty: initialDifficulty = 'Medium' }: GamePageProps) {
-  const { currentUser, updateCurrentUser } = useUser();
-  
-  // Check if this is a daily challenge
-  const isDaily = initialDifficulty === 'daily';
-  const gameDifficulty: Difficulty = isDaily ? 'Expert' : (initialDifficulty.charAt(0).toUpperCase() + initialDifficulty.slice(1)) as Difficulty;
-  
-  const [difficulty, setDifficulty] = useState<Difficulty>(gameDifficulty);
-  const [isDailyChallenge, setIsDailyChallenge] = useState(isDaily);
-  
-  // Initialize grid and daily date together to avoid re-render issues
-  const [gameState] = useState(() => {
+export function GamePage({ onNavigate, currentPage, setGameInProgress, difficulty: initialDifficulty = 'Medium' }: GamePageProps) {
+  const SAVED_GAME_KEY = 'saved_single_player_game';
+
+  const getInitialState = () => {
+    let savedGame = null;
+    try {
+      savedGame = JSON.parse(localStorage.getItem(SAVED_GAME_KEY) || 'null');
+    } catch (error) {
+      console.error("Error parsing saved game:", error);
+      localStorage.removeItem(SAVED_GAME_KEY); // Clear corrupted data
+    }
+    
+    // Validate saved game object more robustly
+    if (
+      savedGame &&
+      Array.isArray(savedGame.grid) && savedGame.grid.length > 0 && Array.isArray(savedGame.grid[0]) &&
+      Array.isArray(savedGame.initialGrid) && savedGame.initialGrid.length > 0 &&
+      Array.isArray(savedGame.solutionGrid) && savedGame.solutionGrid.length > 0
+    ) {
+      return {
+        difficulty: savedGame.difficulty,
+        grid: savedGame.grid,
+        initialGrid: savedGame.initialGrid,
+        solutionGrid: savedGame.solutionGrid,
+        timer: savedGame.timer,
+        hintsUsed: savedGame.hintsUsed,
+        dailyDate: '',
+        isDaily: false,
+      };
+    }
+
+    // No valid saved game, create a new one
+    const isDaily = initialDifficulty === 'daily';
+    const gameDifficulty: Difficulty = isDaily ? 'Expert' : (initialDifficulty.charAt(0).toUpperCase() + initialDifficulty.slice(1)) as Difficulty;
+    
     if (isDaily) {
       const daily = generateDailyPuzzle('Expert');
       return {
+        difficulty: 'Expert' as Difficulty,
         grid: daily.puzzle,
-        solution: daily.solution,
-        dailyDate: daily.date
+        initialGrid: daily.puzzle.map(r => [...r]),
+        solutionGrid: daily.solution,
+        timer: 0,
+        hintsUsed: 0,
+        dailyDate: daily.date,
+        isDaily: true,
       };
     }
+    
     const generated = generateSudokuGrid(gameDifficulty);
     return {
+      difficulty: gameDifficulty,
       grid: generated.puzzle,
-      solution: generated.solution,
-      dailyDate: ''
+      initialGrid: generated.puzzle.map(r => [...r]),
+      solutionGrid: generated.solution,
+      timer: 0,
+      hintsUsed: 0,
+      dailyDate: '',
+      isDaily: false,
     };
-  });
+  };
+
+  const initialState = getInitialState();
+  const { currentUser, updateCurrentUser } = useUser();
+  const { isDarkMode } = useTheme();
   
-  const [dailyDate, setDailyDate] = useState<string>(gameState.dailyDate);
-  const [grid, setGrid] = useState<(number | null)[][]>(gameState.grid);
-  const [initialGrid, setInitialGrid] = useState<(number | null)[][]>(gameState.grid);
-  const [solutionGrid, setSolutionGrid] = useState<number[][]>(gameState.solution);
+  const [difficulty, setDifficulty] = useState<Difficulty>(initialState.difficulty);
+  const [isDailyChallenge, setIsDailyChallenge] = useState(initialState.isDaily);
+  const [dailyDate, setDailyDate] = useState<string>(initialState.dailyDate);
+  const [grid, setGrid] = useState<(number | null)[][]>(initialState.grid);
+  const [initialGrid, setInitialGrid] = useState<(number | null)[][]>(initialState.initialGrid);
+  const [solutionGrid, setSolutionGrid] = useState<number[][]>(initialState.solutionGrid);
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
-  const [timer, setTimer] = useState(0);
-  const [hintsUsed, setHintsUsed] = useState(0);
+  const [timer, setTimer] = useState(initialState.timer);
+  const [hintsUsed, setHintsUsed] = useState(initialState.hintsUsed);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [showNewGameDialog, setShowNewGameDialog] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [isForfeit, setIsForfeit] = useState(false);
   const [pendingDifficulty, setPendingDifficulty] = useState<Difficulty | null>(null);
   const [earnedXP, setEarnedXP] = useState(0);
   const [previousXP, setPreviousXP] = useState(currentUser?.xp || 0);
   const [gameStarted, setGameStarted] = useState(true);
 
+  // Effect to manage the global 'in-game' state
+  useEffect(() => {
+    setGameInProgress(true); // We are in a game
+    return () => {
+      setGameInProgress(false); // We are leaving the game
+    };
+  }, [setGameInProgress]);
+
   // Timer effect
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTimer(prev => prev + 1);
-    }, 1000);
+    let interval: NodeJS.Timeout | undefined;
+    if (!showCompletionDialog && !showLeaveConfirm && !showNewGameDialog) {
+      interval = setInterval(() => {
+        setTimer(prev => prev + 1);
+      }, 1000);
+    }
     
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [showCompletionDialog, showLeaveConfirm, showNewGameDialog]);
 
   // Keyboard input effect
   useEffect(() => {
@@ -138,6 +194,27 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic', diff
     };
   }, [selectedCell, grid, initialGrid, difficulty]);
 
+  // Effect to save game state on unmount or on game finished/new game
+  useEffect(() => {
+    return () => {
+      // Don't save if the game is already over (completion dialog shown)
+      // or if a new game has been started
+      if (!showCompletionDialog) {
+        const gameStateToSave = {
+          grid,
+          initialGrid,
+          solutionGrid,
+          timer,
+          hintsUsed,
+          difficulty,
+        };
+        localStorage.setItem(SAVED_GAME_KEY, JSON.stringify(gameStateToSave));
+      } else {
+        localStorage.removeItem(SAVED_GAME_KEY); // Clear if game completed
+      }
+    };
+  }, [grid, initialGrid, solutionGrid, timer, hintsUsed, difficulty, showCompletionDialog]);
+
   const handleCellClick = (row: number, col: number) => {
     // Allow clicking if cell is empty OR if it's not an initial clue
     if (initialGrid[row][col] === null) {
@@ -171,6 +248,7 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic', diff
   };
 
   const handleNewGame = (newDifficulty?: Difficulty) => {
+    localStorage.removeItem(SAVED_GAME_KEY); // Clear saved game on new game
     const difficultyToUse = newDifficulty || difficulty;
     const { puzzle, solution } = generateSudokuGrid(difficultyToUse);
     // Create a deep copy of the initial grid to preserve the original puzzle state
@@ -195,6 +273,42 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic', diff
     } else {
       handleNewGame();
     }
+  };
+
+  const handleLeaveGame = () => {
+    // Calculate partial XP based on progress
+    const totalEmptyCells = initialGrid.flat().filter(cell => cell === null).length;
+    const filledCells = grid.flat().filter((cell, idx) => {
+      const row = Math.floor(idx / grid.length);
+      const col = idx % grid.length;
+      return cell !== null && initialGrid[row][col] === null;
+    }).length;
+    const progress = totalEmptyCells > 0 ? filledCells / totalEmptyCells : 0;
+    
+    const xpRewards = {
+      'Easy': 50,
+      'Medium': 100,
+      'Hard': 150,
+      'Expert': 200,
+    };
+    const baseXP = isDailyChallenge ? 750 : xpRewards[difficulty];
+    const progressXP = Math.floor(baseXP * progress);
+    const consolationXP = Math.floor(baseXP * 0.15);
+    const finalXP = Math.max(progressXP, consolationXP);
+
+    setEarnedXP(finalXP); // Set earned XP for the dialog
+
+    if (currentUser && finalXP > 0) {
+      updateCurrentUser({
+        xp: currentUser.xp + finalXP,
+        level: Math.floor((currentUser.xp + finalXP) / 1000) + 1,
+      });
+    }
+
+    localStorage.removeItem(SAVED_GAME_KEY);
+    setIsForfeit(true); // Set forfeit state for the dialog
+    setShowLeaveConfirm(false);
+    setShowCompletionDialog(true); // Show the completion dialog
   };
 
   const isValidSolution = (currentGrid: (number | null)[][]): boolean => {
@@ -299,6 +413,8 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic', diff
         }
       }
       
+      localStorage.removeItem(SAVED_GAME_KEY); // Clear saved game on completion
+      setIsForfeit(false);
       setShowCompletionDialog(true);
     }
   };
@@ -320,7 +436,14 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic', diff
     }
   };
 
-  const currentBoardStyle = boardStyles.find(s => s.id === boardStyle) || boardStyles[0];
+  const selectedStyleId = currentUser?.boardStyle || 'classic';
+  
+  let finalStyleId = selectedStyleId;
+  if (selectedStyleId === 'classic') {
+    finalStyleId = isDarkMode ? 'classic-dark' : 'classic-light';
+  }
+  
+  const currentBoardStyle = boardStyles.find(s => s.id === finalStyleId) || boardStyles[0];
 
   return (
     <PageWrapper onNavigate={onNavigate} currentPage={currentPage}>
@@ -383,6 +506,15 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic', diff
               </Badge>
             </div>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowLeaveConfirm(true)}
+            className="flex items-center gap-1 md:text-base md:h-10 md:px-4 text-destructive hover:text-destructive"
+          >
+            <LogOut className="h-3 w-3 md:h-4 md:w-4" />
+            Leave
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -493,15 +625,27 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic', diff
       </div>
 
       {/* Completion Dialog */}
-      <Dialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog}>
-        <DialogContent className="max-w-sm">
+      <Dialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog} modal={true}>
+        <DialogContent className="max-w-sm" preventClose={true}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-center justify-center">
-              <CheckCircle className="h-6 w-6 text-green-500" />
-              Puzzle Complete!
+              {isForfeit ? (
+                <>
+                  <LogOut className="h-6 w-6 text-destructive" />
+                  Game Forfeited
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-6 w-6 text-green-500" />
+                  Puzzle Complete!
+                </>
+              )}
             </DialogTitle>
             <DialogDescription className="text-center">
-              Congratulations on completing the puzzle!
+              {isForfeit
+                ? "You left the game early."
+                : "Congratulations on completing the puzzle!"
+              }
             </DialogDescription>
           </DialogHeader>
 
@@ -509,7 +653,10 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic', diff
             <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 p-4 rounded-lg text-center">
               <p className="text-3xl mb-1">+{earnedXP} XP</p>
               <p className="text-sm text-muted-foreground">
-                Time: {formatTime(timer)} • Hints: {hintsUsed}/3
+                {isForfeit
+                  ? `Partial XP awarded for progress.`
+                  : `Time: ${formatTime(timer)} • Hints: ${hintsUsed}/3`
+                }
               </p>
             </div>
 
@@ -532,7 +679,7 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic', diff
                 className="flex-1"
                 onClick={() => {
                   setShowCompletionDialog(false);
-                  onNavigate('explore');
+                  onNavigate(isForfeit ? 'play' : 'explore');
                 }}
               >
                 Back to Menu
@@ -572,6 +719,24 @@ export function GamePage({ onNavigate, currentPage, boardStyle = 'classic', diff
             </AlertDialogCancel>
             <AlertDialogAction onClick={confirmNewGame}>
               Start New Game
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Leave Game Confirmation Dialog */}
+      <AlertDialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave Game?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to leave? This will end your current game. You will receive reduced XP for your progress.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLeaveGame} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Leave
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -295,28 +295,14 @@ export function SettingsPage({ onNavigate, currentPage }: SettingsPageProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Bell className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="notifications" className="cursor-pointer">
-                    Push Notifications
+                  <Label htmlFor="toastNotifications" className="cursor-pointer">
+                    Notifications
                   </Label>
                 </div>
                 <Switch
-                  id="notifications"
-                  checked={currentUser.preferences?.notifications ?? false}
-                  onCheckedChange={(checked) => handlePreferenceChange('notifications', checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Volume2 className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="sound" className="cursor-pointer">
-                    Sound Effects
-                  </Label>
-                </div>
-                <Switch
-                  id="sound"
-                  checked={currentUser.preferences?.sound ?? false}
-                  onCheckedChange={(checked) => handlePreferenceChange('sound', checked)}
+                  id="toastNotifications"
+                  checked={currentUser.preferences?.toastNotifications ?? true}
+                  onCheckedChange={(checked) => handlePreferenceChange('toastNotifications', checked)}
                 />
               </div>
 

@@ -38,6 +38,8 @@ export type RoomPlayer = {
   timeElapsed: number;
   profileColor?: string;
   profilePicture?: string;
+  placement?: number;
+  forfeited?: boolean;
 };
 
 export type FriendRequest = {
@@ -69,6 +71,8 @@ export type Notification = {
   senderProfilePicture?: string; // Added
 
   senderUsername?: string; // Added
+
+  senderProfileColor?: string;
 
 };
 

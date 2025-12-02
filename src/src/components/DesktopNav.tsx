@@ -40,10 +40,11 @@ type DesktopNavProps = {
   currentPage: string;
   isCollapsed: boolean;
   toggleSidebar: () => void;
+  isGameInProgress: boolean;
   onJoinRoom?: (roomId: string) => void;
 };
 
-export function DesktopNav({ onNavigate, currentPage, isCollapsed, toggleSidebar, onJoinRoom }: DesktopNavProps) {
+export function DesktopNav({ onNavigate, currentPage, isCollapsed, toggleSidebar, isGameInProgress, onJoinRoom }: DesktopNavProps) {
   const { currentUser } = useUser();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -114,11 +115,16 @@ export function DesktopNav({ onNavigate, currentPage, isCollapsed, toggleSidebar
             <button
               key={id}
               onClick={() => onNavigate(id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:scale-105 active:scale-95 relative ${
+              disabled={isGameInProgress}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all active:scale-95 relative ${
                 currentPage === id 
                   ? 'bg-primary text-primary-foreground' 
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              } ${isCollapsed ? 'justify-center' : ''}`}
+                  : 'text-muted-foreground'
+              } ${isCollapsed ? 'justify-center' : ''} ${
+                isGameInProgress
+                  ? 'cursor-not-allowed opacity-50'
+                  : 'hover:scale-105 hover:bg-muted hover:text-foreground'
+              }`}
             >
               <Icon className="h-5 w-5" />
               {!isCollapsed && <span>{label}</span>}

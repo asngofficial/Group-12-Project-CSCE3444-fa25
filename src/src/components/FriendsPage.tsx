@@ -408,9 +408,16 @@ export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPage
                   <Card key={request.id} className="p-4 bg-primary/5 border-primary/20">
                     <div className="flex items-start gap-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarFallback className="text-white bg-primary">
-                          {request.fromUsername[0].toUpperCase()}
-                        </AvatarFallback>
+                        {request.senderProfilePicture ? (
+                          <AvatarImage src={request.senderProfilePicture} alt={request.fromUsername} />
+                        ) : (
+                          <AvatarFallback 
+                            className="text-white"
+                            style={{ backgroundColor: request.senderProfileColor || '#6366f1' }}
+                          >
+                            {request.fromUsername[0].toUpperCase()}
+                          </AvatarFallback>
+                        )}
                       </Avatar>
                       
                       <div className="flex-1 space-y-2">
@@ -467,11 +474,16 @@ export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPage
                   >
                     <div className="flex items-start gap-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarFallback
-                          className="text-white bg-primary"
-                        >
-                          {notification.fromUsername?.[0]?.toUpperCase() || 'N'}
-                        </AvatarFallback>
+                        {notification.senderProfilePicture ? (
+                          <AvatarImage src={notification.senderProfilePicture} alt={notification.senderUsername} />
+                        ) : (
+                          <AvatarFallback
+                            className="text-white"
+                            style={{ backgroundColor: notification.senderProfileColor || '#6366f1' }}
+                          >
+                            {notification.senderUsername?.[0]?.toUpperCase() || 'N'}
+                          </AvatarFallback>
+                        )}
                       </Avatar>
                       
                       <div className="flex-1 space-y-2">

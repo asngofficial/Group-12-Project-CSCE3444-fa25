@@ -12,6 +12,7 @@ export type BoardStyle = {
   selectedCellBorder: string;
   thickBorder: string;
   glowColor: string;
+  hidden?: boolean;
 };
 
 export const boardStyles: BoardStyle[] = [
@@ -24,6 +25,28 @@ export const boardStyles: BoardStyle[] = [
     selectedCellBorder: 'border-blue-500',
     thickBorder: 'border-border',
     glowColor: 'rgba(59, 130, 246, 0.15)'
+  },
+  {
+    id: 'classic-light',
+    name: 'Classic Light',
+    description: 'Internal use - high contrast for light mode',
+    preview: '⬜',
+    cellBorder: 'border-black',
+    selectedCellBorder: 'border-blue-500',
+    thickBorder: 'border-black',
+    glowColor: 'rgba(59, 130, 246, 0.15)',
+    hidden: true
+  },
+  {
+    id: 'classic-dark',
+    name: 'Classic Dark',
+    description: 'Internal use - high contrast for dark mode',
+    preview: '⬜',
+    cellBorder: 'border-white',
+    selectedCellBorder: 'border-blue-500',
+    thickBorder: 'border-white',
+    glowColor: 'rgba(59, 130, 246, 0.15)',
+    hidden: true
   },
   {
     id: 'ocean',
@@ -117,7 +140,7 @@ export function BoardCustomization({ open, onOpenChange, currentStyle, onStyleCh
 
         <ScrollArea className="h-[400px] pr-4">
           <div className="grid grid-cols-2 gap-3">
-            {boardStyles.map((style) => (
+            {boardStyles.filter(style => !style.hidden).map((style) => (
               <button
                 key={style.id}
                 onClick={() => onStyleChange(style.id)}

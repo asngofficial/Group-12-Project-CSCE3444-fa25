@@ -169,9 +169,10 @@ export function NotificationDropdown({ onNavigate }: NotificationDropdownProps) 
                            <AvatarImage src={notification.senderProfilePicture} alt={notification.senderUsername || 'Sender'} />
                          ) : (
                            <AvatarFallback
-                            className="text-white text-xs bg-gray-700"
+                            className="text-white text-xs"
+                            style={{ backgroundColor: notification.senderProfileColor || '#6366f1' }}
                           >
-                            {notification.senderUsername ? notification.senderUsername.charAt(0).toUpperCase() : notification.message.charAt(0).toUpperCase()}
+                            {notification.senderUsername ? notification.senderUsername.charAt(0).toUpperCase() : 'S'}
                           </AvatarFallback>
                          )}
                       </Avatar>

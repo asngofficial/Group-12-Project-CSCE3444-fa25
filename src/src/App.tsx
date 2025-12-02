@@ -29,6 +29,7 @@ function AppContent() {
   const [gameDifficulty, setGameDifficulty] = useState<string>('Medium');
   const [currentRoomId, setCurrentRoomId] = useState<string>('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isGameInProgress, setIsGameInProgress] = useState(false);
   const deviceType = useDeviceType();
 
   useEffect(() => {
@@ -43,6 +44,10 @@ function AppContent() {
       setCurrentRoomId(options.roomId);
     }
     setCurrentPage(page as Page);
+  };
+
+  const handleSetGameInProgress = (inProgress: boolean) => {
+    setIsGameInProgress(inProgress);
   };
 
   const handleBoardStyleChange = (style: string) => {
@@ -73,13 +78,13 @@ function AppContent() {
   const renderPage = () => {
     switch (currentPage) {
       case 'game':
-        return <GamePage onNavigate={handleNavigate} currentPage={currentPage} boardStyle={currentUser?.boardStyle || 'classic'} difficulty={gameDifficulty} />;
+        return <GamePage onNavigate={handleNavigate} currentPage={currentPage} setGameInProgress={handleSetGameInProgress} difficulty={gameDifficulty} />;
       case 'botgame':
-        return <BotGamePage onNavigate={handleNavigate} currentPage={currentPage} boardStyle={currentUser?.boardStyle || 'classic'} difficulty={gameDifficulty} />;
+        return <BotGamePage onNavigate={handleNavigate} currentPage={currentPage} setGameInProgress={handleSetGameInProgress} difficulty={gameDifficulty} />;
       case 'mplobby':
         return <MultiplayerLobbyPage onNavigate={handleNavigate} currentPage={currentPage} roomId={currentRoomId} />;
       case 'mpgame':
-        return <MultiplayerGamePage onNavigate={handleNavigate} currentPage={currentPage} roomId={currentRoomId} boardStyle={currentUser?.boardStyle || 'classic'} />;
+        return <MultiplayerGamePage onNavigate={handleNavigate} currentPage={currentPage} setGameInProgress={handleSetGameInProgress} roomId={currentRoomId} />;
       case 'leaderboard':
         return <LeaderboardPage onNavigate={handleNavigate} currentPage={currentPage} />;
       case 'challenge':
@@ -114,7 +119,7 @@ function AppContent() {
       {/* Desktop layout with sidebar */}
       {deviceType === 'desktop' && (
         <div className="flex h-screen bg-background">
-          <DesktopNav onNavigate={handleNavigate} currentPage={currentPage} isCollapsed={isSidebarCollapsed} toggleSidebar={toggleSidebar} />
+          <DesktopNav onNavigate={handleNavigate} currentPage={currentPage} isCollapsed={isSidebarCollapsed} toggleSidebar={toggleSidebar} isGameInProgress={isGameInProgress} />
           <div className={`flex-1 overflow-auto transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
             {renderPage()}
           </div>
@@ -127,7 +132,7 @@ function AppContent() {
           <div className="flex-1 overflow-auto">
             {renderPage()}
           </div>
-          <BottomNav onNavigate={handleNavigate} currentPage={currentPage} />
+          <BottomNav onNavigate={handleNavigate} currentPage={currentPage} isGameInProgress={isGameInProgress} />
         </div>
       )}
     </>

@@ -230,7 +230,18 @@ app.put('/api/users/:userId', authenticateToken, async (req, res) => {
   // Prevent password updates through this endpoint
   const { password, ...updates } = req.body;
   
-  db.data.users[userIndex] = { ...db.data.users[userIndex], ...updates };
+  // Get the current user object
+  const userToUpdate = db.data.users[userIndex];
+
+  // Merge the updates from the request body
+  const mergedUser = { ...userToUpdate, ...updates };
+
+  // If the 'xp' value is being updated, always recalculate the level on the server
+  if (updates.xp !== undefined) {
+    mergedUser.level = Math.floor(mergedUser.xp / 1000) + 1;
+  }
+
+  db.data.users[userIndex] = mergedUser; // Save the newly constructed user object
   await db.write();
 
   const updatedUser = { ...db.data.users[userIndex] };
@@ -249,6 +260,11 @@ app.post('/api/friends/request', authenticateToken, async (req, res) => {
 
     await db.read();
     const toUser = db.data.users.find(u => u.username.toLowerCase() === toUsername.toLowerCase());
+
+    if (!toUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     const fromUser = db.data.users.find(u => u.id === fromUserId);
     console.log("Creating friend request notification. fromUser:", JSON.stringify(fromUser, null, 2));
 
@@ -316,7 +332,18 @@ app.get('/api/friends/requests/:userId', authenticateToken, async (req, res) => 
     if (req.user.id !== req.params.userId) return res.sendStatus(403);
     await db.read();
     const requests = db.data.friendRequests.filter(fr => fr.toUserId === req.params.userId);
-    res.json(requests);
+    
+    // Populate sender info
+    const populatedRequests = requests.map(req => {
+        const fromUser = db.data.users.find(u => u.id === req.fromUserId);
+        return {
+            ...req,
+            senderProfilePicture: fromUser?.profilePicture,
+            senderProfileColor: fromUser?.profileColor,
+        };
+    });
+
+    res.json(populatedRequests);
 });
 
 app.delete('/api/friends/:userId/:friendId', authenticateToken, async (req, res) => {
@@ -383,6 +410,7 @@ app.post('/api/challenges', authenticateToken, async (req, res) => {
     };
     db.data.challenges.push(newChallenge);
 
+    const notificationId = `notification_${generateId()}`;
     const newNotification = {
         id: notificationId,
         userId: toUserId,
@@ -393,6 +421,7 @@ app.post('/api/challenges', authenticateToken, async (req, res) => {
         createdAt: new Date().toISOString(),
         senderProfilePicture: fromUser.profilePicture, // Added
         senderUsername: fromUser.username, // Added
+        senderProfileColor: fromUser.profileColor,
     };
     db.data.notifications.push(newNotification);
     
@@ -560,39 +589,59 @@ app.post('/api/rooms/:roomId/leave', authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     await db.read();
-    const roomIndex = db.data.rooms.findIndex(r => r.id === roomId);
-    if (roomIndex === -1) return res.sendStatus(404);
+    const room = db.data.rooms.find(r => r.id === roomId);
+    if (!room) return res.status(200).json({ message: "Room not found." });
 
-    const room = db.data.rooms[roomIndex];
-    const wasActive = room.status === 'active';
-    room.players = room.players.filter(p => p.userId !== userId);
+    const player = room.players.find(p => p.userId === userId);
+    if (!player) return res.status(200).json({ message: "Player not in room." });
 
-    if (room.players.length === 0) {
-        db.data.rooms.splice(roomIndex, 1);
-    } else {
-        // If a player leaves an active game and only one remains, declare them the winner.
-        if (wasActive && room.players.length === 1) {
-            const winner = room.players[0];
-            winner.finished = true;
-            winner.placement = 1;
-            room.status = 'finished';
-
-            const difficulty = room.difficulty || 'Medium';
-            const xpRewards = { 'Easy': 250, 'Medium': 500, 'Hard': 750, 'Expert': 1000 };
-            const baseXP = xpRewards[difficulty] || 500;
-            const user = db.data.users.find(u => u.id === winner.userId);
-            if (user) {
-              user.xp += baseXP;
-              user.level = Math.floor(user.xp / 1000) + 1;
+    // Handle leaving a lobby (game not started)
+    if (room.status === 'waiting') {
+        const roomIndex = db.data.rooms.findIndex(r => r.id === roomId);
+        room.players = room.players.filter(p => p.userId !== userId);
+        
+        if (room.players.length === 0) {
+            // Last player left lobby, clean up challenges and delete room
+            const associatedChallenges = db.data.challenges.filter(c => c.roomId === roomId);
+            for (const challenge of associatedChallenges) {
+                const notifIndex = db.data.notifications.findIndex(n => n.relatedId === challenge.id);
+                if (notifIndex > -1) db.data.notifications.splice(notifIndex, 1);
             }
+            db.data.challenges = db.data.challenges.filter(c => c.roomId !== roomId);
+            if (roomIndex > -1) db.data.rooms.splice(roomIndex, 1);
+            io.to(roomId).emit('room:deleted', { roomId });
+        } else {
+            // Host left lobby, assign new host
+            if (room.hostId === userId) {
+                room.hostId = room.players[0].userId;
+            }
+            io.to(roomId).emit('room:update', room);
         }
-        // If host leaves, assign a new host
-        else if (room.hostId === userId) {
-            room.hostId = room.players[0].userId;
+    } 
+    // Handle forfeiting an active game
+    else if (room.status === 'active') {
+        player.forfeited = true;
+        player.finished = true; // Mark as finished for game-end logic
+
+        const activePlayers = room.players.filter(p => !p.forfeited && !p.finished);
+
+        // If only one non-forfeited player is left, they are the winner.
+        if (activePlayers.length === 1) {
+            const winner = activePlayers[0];
+            winner.finished = true;
+            // Use current timer as finish time; this is a simplification
+            winner.timeFinished = room.startedAt ? (Date.now() - new Date(room.startedAt).getTime()) / 1000 : 0;
         }
+
+        const allPlayersDone = room.players.every(p => p.finished || p.forfeited);
+        if (allPlayersDone) {
+            room.status = 'finished';
+            calculatePlacements(room);
+        }
+
         io.to(roomId).emit('room:update', room);
     }
-    
+
     await db.write();
     res.status(200).json({});
 });
@@ -762,9 +811,24 @@ app.post('/api/notifications/:userId/read-all', authenticateToken, async (req, r
 // SOCKET.IO (for real-time)
 // =================================
 const calculatePlacements = (room) => {
-  const finishedPlayers = room.players.filter(p => p.finished);
-  finishedPlayers.sort((a, b) => a.timeFinished - b.timeFinished);
-  finishedPlayers.forEach((player, index) => {
+  // Sort all players by finish time, with forfeited players at the end
+  const sortedPlayers = [...room.players].sort((a, b) => {
+    // Forfeited players always come after non-forfeited players
+    if (a.forfeited && !b.forfeited) return 1;
+    if (!a.forfeited && b.forfeited) return -1;
+
+    // For players who are finished (or both forfeited, if that case ever arises), sort by time
+    if (a.finished && b.finished) {
+      // If both are finished, sort by time. Forfeiters have timeFinished = Infinity
+      return (a.timeFinished || 0) - (b.timeFinished || 0);
+    }
+    
+    // Players who are not finished and not forfeited should theoretically not be here if game is finished.
+    return 0; 
+  });
+
+  // Assign ranks based on the sorted order
+  sortedPlayers.forEach((player, index) => {
     player.placement = index + 1;
   });
 };
@@ -864,11 +928,11 @@ io.on('connection', (socket) => {
       player.finished = true;
       player.timeFinished = time;
 
-      // Check if all players are now finished
-      const allPlayersFinished = room.players.every(p => p.finished);
-      if (allPlayersFinished) {
+      // Check if the game is now over (no players left who haven't finished or forfeited)
+      const activePlayers = room.players.filter(p => !p.finished && !p.forfeited);
+      if (activePlayers.length === 0) {
         room.status = 'finished';
-        calculatePlacements(room); // Recalculate final ranks
+        calculatePlacements(room);
       }
       
       await db.write();

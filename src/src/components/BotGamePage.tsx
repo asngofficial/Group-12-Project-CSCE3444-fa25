@@ -7,9 +7,11 @@ import { Timer, User, Bot, Trophy, Home, RotateCcw, Flag } from "lucide-react";
 import { boardStyles } from "./BoardCustomization";
 import { useUser } from "../contexts/UserContext";
 import { generateSudokuGrid, getGridSize } from "../utils/sudokuGenerator";
+import { XPProgress } from "./XPProgress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
-import { Avatar, AvatarFallback } from "./ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useTheme } from "../contexts/ThemeContext";
 
 type Difficulty = 'Easy' | 'Medium' | 'Hard' | 'Expert';
 
@@ -35,41 +37,79 @@ function getDifficultyColor(difficulty: Difficulty): string {
 type BotGamePageProps = {
   onNavigate: (page: string) => void;
   currentPage: string;
-  boardStyle?: string;
   difficulty?: string;
+  setGameInProgress: (inProgress: boolean) => void;
 };
 
-export function BotGamePage({ onNavigate, currentPage, boardStyle = 'classic', difficulty: initialDifficulty = 'Medium' }: BotGamePageProps) {
-  const { currentUser, updateCurrentUser } = useUser();
-  const gameDifficulty: Difficulty = (initialDifficulty.charAt(0).toUpperCase() + initialDifficulty.slice(1)) as Difficulty;
-  
-  const [difficulty, setDifficulty] = useState<Difficulty>(gameDifficulty);
-  
-  // Initialize grid
-  const [gameState] = useState(() => {
+export function BotGamePage({ onNavigate, currentPage, setGameInProgress, difficulty: initialDifficulty = 'Medium' }: BotGamePageProps) {
+  const SAVED_GAME_KEY = 'saved_bot_game';
+
+  const getInitialState = () => {
+    let savedGame = null;
+    try {
+      savedGame = JSON.parse(localStorage.getItem(SAVED_GAME_KEY) || 'null');
+    } catch (error) {
+      console.error("Error parsing saved bot game:", error);
+      localStorage.removeItem(SAVED_GAME_KEY); // Clear corrupted data
+    }
+
+    // Validate saved game
+    if (
+      savedGame &&
+      Array.isArray(savedGame.grid) && savedGame.grid.length > 0 && Array.isArray(savedGame.grid[0]) &&
+      Array.isArray(savedGame.initialGrid) && savedGame.initialGrid.length > 0 &&
+      Array.isArray(savedGame.solutionGrid) && savedGame.solutionGrid.length > 0
+    ) {
+      return { ...savedGame, isNew: false };
+    }
+
+    // No valid saved game, create a new one
+    localStorage.removeItem(SAVED_GAME_KEY); // Clean up just in case
+    const gameDifficulty: Difficulty = (initialDifficulty.charAt(0).toUpperCase() + initialDifficulty.slice(1)) as Difficulty;
     const { puzzle, solution } = generateSudokuGrid(gameDifficulty);
+    
     return {
+      difficulty: gameDifficulty,
       grid: puzzle,
-      initialGrid: puzzle.map(row => [...row]), // Deep copy for initial state
-      solution: solution
+      initialGrid: puzzle.map(r => [...r]),
+      solutionGrid: solution,
+      timer: 0,
+      botGrid: puzzle.map(r => [...r]),
+      botProgress: 0,
+      userProgress: 0,
+      isNew: true,
     };
-  });
+  };
+
+  const initialState = getInitialState();
+  const { currentUser, updateCurrentUser } = useUser();
+  const { isDarkMode } = useTheme();
   
-  const [grid, setGrid] = useState<(number | null)[][]>(gameState.grid);
-  const [initialGrid, setInitialGrid] = useState<(number | null)[][]>(gameState.initialGrid);
-  const [solutionGrid] = useState<number[][]>(gameState.solution);
+  const [difficulty, setDifficulty] = useState<Difficulty>(initialState.difficulty);
+  
+  const [grid, setGrid] = useState<(number | null)[][]>(initialState.grid);
+  const [initialGrid, setInitialGrid] = useState<(number | null)[][]>(initialState.initialGrid);
+  const [solutionGrid] = useState<number[][]>(initialState.solutionGrid);
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
-  const [timer, setTimer] = useState(0);
+  const [timer, setTimer] = useState(initialState.timer);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [showForfeitDialog, setShowForfeitDialog] = useState(false);
   const [earnedXP, setEarnedXP] = useState(0);
   const [userWon, setUserWon] = useState(false);
   
   // Bot state
-  const [botGrid, setBotGrid] = useState<(number | null)[][]>(gameState.grid.map(row => [...row]));
-  const [botProgress, setBotProgress] = useState(0);
-  const [userProgress, setUserProgress] = useState(0);
+  const [botGrid, setBotGrid] = useState<(number | null)[][]>(initialState.botGrid);
+  const [botProgress, setBotProgress] = useState(initialState.botProgress);
+  const [userProgress, setUserProgress] = useState(initialState.userProgress);
   const [gameFinished, setGameFinished] = useState(false);
+
+  // Effect to manage the global 'in-game' state
+  useEffect(() => {
+    setGameInProgress(true); // We are in a game
+    return () => {
+      setGameInProgress(false); // We are leaving the game
+    };
+  }, [setGameInProgress]);
 
   // Calculate total empty cells
   const totalEmptyCells = initialGrid.flat().filter(cell => cell === null).length;
@@ -98,7 +138,7 @@ export function BotGamePage({ onNavigate, currentPage, boardStyle = 'classic', d
 
   // Timer effect
   useEffect(() => {
-    if (gameFinished) {
+    if (gameFinished || showForfeitDialog) {
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
         timerIntervalRef.current = null;
@@ -116,7 +156,7 @@ export function BotGamePage({ onNavigate, currentPage, boardStyle = 'classic', d
         timerIntervalRef.current = null;
       }
     };
-  }, [gameFinished]);
+  }, [gameFinished, showForfeitDialog]);
 
   // Keyboard input effect
   useEffect(() => {
@@ -257,6 +297,29 @@ export function BotGamePage({ onNavigate, currentPage, boardStyle = 'classic', d
     setUserProgress(progress);
   }, [grid, initialGrid, totalEmptyCells]);
 
+  // Effect to save game state on unmount or on game finished/forfeited
+  useEffect(() => {
+    return () => {
+      // Don't save if the game is already over (completion dialog shown)
+      // or if gameFinished is true (meaning completed or forfeited)
+      if (!gameFinished) {
+        const gameStateToSave = {
+          difficulty,
+          grid,
+          initialGrid,
+          solutionGrid,
+          timer,
+          botGrid,
+          botProgress,
+          userProgress,
+        };
+        localStorage.setItem(SAVED_GAME_KEY, JSON.stringify(gameStateToSave));
+      } else {
+        localStorage.removeItem(SAVED_GAME_KEY); // Clear if game completed or forfeited
+      }
+    };
+  }, [difficulty, grid, initialGrid, solutionGrid, timer, botGrid, botProgress, userProgress, gameFinished]);
+
   const isValidSolution = (currentGrid: (number | null)[][]): boolean => {
     const gridSize = currentGrid.length;
     const boxSize = gridSize === 4 ? 2 : gridSize === 6 ? 3 : 3;
@@ -353,21 +416,25 @@ export function BotGamePage({ onNavigate, currentPage, boardStyle = 'classic', d
       const newXP = currentUser.xp + totalXP;
       const newLevel = Math.floor(newXP / 1000) + 1;
       const newSolved = playerWon ? currentUser.solvedPuzzles + 1 : currentUser.solvedPuzzles;
+      const newWins = playerWon ? (currentUser.wins || 0) + 1 : currentUser.wins;
       
       updateCurrentUser({
         xp: newXP,
         level: newLevel,
         solvedPuzzles: newSolved,
+        wins: newWins,
         averageTime: formatTime(timer),
       });
     }
     
     if (isMountedRef.current) {
+      localStorage.removeItem(SAVED_GAME_KEY); // Clear saved game on completion/forfeit
       setShowCompletionDialog(true);
     }
   };
 
   const handleNewGame = () => {
+    localStorage.removeItem(SAVED_GAME_KEY); // Clear saved game on new game
     const { puzzle } = generateSudokuGrid(difficulty);
     const newInitialGrid = puzzle.map(row => [...row]);
     setGrid(puzzle);
@@ -389,7 +456,12 @@ export function BotGamePage({ onNavigate, currentPage, boardStyle = 'classic', d
     setUserWon(false);
   };
 
-  const currentBoardStyle = boardStyles.find(s => s.id === boardStyle) || boardStyles[0];
+  const selectedStyleId = currentUser?.boardStyle || 'classic';
+  let finalStyleId = selectedStyleId;
+  if (selectedStyleId === 'classic') {
+    finalStyleId = isDarkMode ? 'classic-dark' : 'classic-light';
+  }
+  const currentBoardStyle = boardStyles.find(s => s.id === finalStyleId) || boardStyles[0];
   const gridSize = grid.length;
 
   return (
@@ -402,12 +474,16 @@ export function BotGamePage({ onNavigate, currentPage, boardStyle = 'classic', d
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 md:gap-3">
                 <Avatar className="h-8 w-8 md:h-10 md:w-10 border-2 border-white dark:border-gray-800">
-                  <AvatarFallback 
-                    className="text-white text-sm md:text-base"
-                    style={{ backgroundColor: currentUser?.profileColor || '#6366f1' }}
-                  >
-                    {currentUser?.username[0].toUpperCase()}
-                  </AvatarFallback>
+                  {currentUser?.profilePicture ? (
+                    <AvatarImage src={currentUser.profilePicture} alt={currentUser.username} />
+                  ) : (
+                    <AvatarFallback 
+                      className="text-white text-sm md:text-base"
+                      style={{ backgroundColor: currentUser?.profileColor || '#6366f1' }}
+                    >
+                      {currentUser?.username?.[0].toUpperCase()}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
                 <span className="font-medium md:text-lg">{currentUser?.username}</span>
               </div>
@@ -515,7 +591,7 @@ export function BotGamePage({ onNavigate, currentPage, boardStyle = 'classic', d
                         className={`
                           ${gridSize === 4 ? 'w-12 h-12 md:w-20 md:h-20 lg:w-24 lg:h-24' : gridSize === 6 ? 'w-10 h-10 md:w-16 md:h-16 lg:w-20 lg:h-20' : 'w-8 h-8 md:w-14 md:h-14 lg:w-16 lg:h-16'}
                           flex items-center justify-center transition-colors text-base md:text-2xl lg:text-3xl
-                          ${isInitialCell ? `bg-muted/60 font-bold text-foreground cursor-not-allowed border-2 md:border-4 ${currentBoardStyle.cellBorder}` : 'bg-card font-normal'}
+                          ${isInitialCell ? 'bg-muted font-bold text-foreground cursor-not-allowed' : 'bg-card font-normal'}
                           ${selectedCell?.[0] === rowIndex && selectedCell?.[1] === colIndex 
                             ? `ring-2 md:ring-4 ring-inset ${currentBoardStyle.selectedCellBorder.replace('border-', 'ring-')} bg-primary/10`
                             : ''
@@ -563,8 +639,8 @@ export function BotGamePage({ onNavigate, currentPage, boardStyle = 'classic', d
       </div>
 
       {/* Completion Dialog */}
-      <Dialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog}>
-        <DialogContent className="max-w-sm">
+      <Dialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog} modal={true}>
+        <DialogContent className="max-w-sm" preventClose={true}>
           <DialogHeader>
             <DialogTitle className="text-center text-2xl">
               {userWon ? (
@@ -608,6 +684,19 @@ export function BotGamePage({ onNavigate, currentPage, boardStyle = 'classic', d
                 )}
               </div>
             </div>
+            
+            {currentUser && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground text-center">Level Progress</p>
+                <XPProgress
+                  currentXP={currentUser.xp}
+                  currentLevel={currentUser.level}
+                  showLabel={true}
+                  size="md"
+                  animate={true}
+                />
+              </div>
+            )}
             
             <div className="flex gap-2">
               <Button 

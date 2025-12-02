@@ -88,7 +88,41 @@ export type Notification = {
   data?: any; // Additional data like difficulty, roomCode, etc.
   createdAt: number;
   read: boolean;
+  senderProfilePicture?: string;
+  senderProfileColor?: string;
 };
+
+//...
+
+export function createNotification(
+  type: Notification['type'],
+  fromUserId: string,
+  toUserId: string,
+  message: string,
+  data?: any
+): Notification {
+  const notifications = getAllNotifications();
+  const fromUser = getUserById(fromUserId);
+  
+  const newNotification: Notification = {
+    id: `notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    type,
+    fromUserId,
+    fromUsername: fromUser?.username || 'Unknown',
+    toUserId,
+    message,
+    data,
+    createdAt: Date.now(),
+    read: false,
+    senderProfilePicture: fromUser?.profilePicture,
+    senderProfileColor: fromUser?.profileColor,
+  };
+  
+  notifications.push(newNotification);
+  saveNotifications(notifications);
+  
+  return newNotification;
+}
 
 const STORAGE_KEYS = {
   USERS: 'sudoku_users',

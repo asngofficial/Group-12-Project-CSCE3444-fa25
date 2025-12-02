@@ -55,35 +55,9 @@ export function MultiplayerLobbyPage({ onNavigate, roomId }: MultiplayerLobbyPag
       return;
     }
 
-    // Connect socket and emit user:connected
+    // Connect socket, join room, and set up listeners
     connectSocket(currentUser.id);
     socket.emit('room:join', roomId);
-
-    const initialLoad = async () => {
-      try {
-        const loadedRoom = await getRoom(roomId);
-        setRoom(loadedRoom);
-      } catch (error) {
-        toast.error("Room not found. Navigating back.");
-        handleLeave();
-      } finally {
-        setLoading(false);
-      }
-    };
-    initialLoad();
-
-    // Temporary polling for host to see joined players if socket updates are delayed
-    let pollInterval: NodeJS.Timeout;
-    if (isHost) { // Only poll if current user is host
-      pollInterval = setInterval(async () => {
-        try {
-          const updatedRoom = await getRoom(roomId);
-          setRoom(updatedRoom);
-        } catch (error) {
-          console.error("Polling for room update failed:", error);
-        }
-      }, 3000); // Poll every 3 seconds
-    }
 
     const onRoomUpdate = (updatedRoom: MultiplayerRoom) => setRoom(updatedRoom);
     const onGameStart = () => {
@@ -102,14 +76,58 @@ export function MultiplayerLobbyPage({ onNavigate, roomId }: MultiplayerLobbyPag
     socket.on('game:start', onGameStart);
     socket.on('room:you_were_kicked', onYouWereKicked);
 
+    const onRoomDeleted = ({ roomId: deletedRoomId }: { roomId: string }) => {
+      if (deletedRoomId === roomId) {
+        toast.error("The host has left and the room has been closed.");
+        onNavigate('challenge');
+      }
+    };
+    socket.on('room:deleted', onRoomDeleted);
+
+    // Initial room data load
+    const initialLoad = async () => {
+      try {
+        const loadedRoom = await getRoom(roomId);
+        setRoom(loadedRoom);
+      } catch (error) {
+        toast.error("Room not found. Navigating back.");
+        handleLeave();
+      } finally {
+        setLoading(false);
+      }
+    };
+    initialLoad();
+
     return () => {
+      // Clean up listeners and disconnect socket when the lobby is left
       socket.off('room:update', onRoomUpdate);
       socket.off('game:start', onGameStart);
       socket.off('room:you_were_kicked', onYouWereKicked);
-      clearInterval(pollInterval); // Clear interval on unmount
-      disconnectSocket(); // Disconnect socket on component unmount
+      socket.off('room:deleted', onRoomDeleted);
+      disconnectSocket(); // Disconnect on leaving the lobby
     };
-  }, [roomId, currentUser, onNavigate, handleLeave, isHost]);
+  }, [roomId, currentUser, onNavigate, handleLeave]);
+
+  // Separate effect for host-only polling, which depends on isHost
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout | undefined;
+    if (isHost) {
+      pollInterval = setInterval(async () => {
+        try {
+          const updatedRoom = await getRoom(roomId);
+          setRoom(updatedRoom);
+        } catch (error) {
+          console.error("Polling for room update failed:", error);
+        }
+      }, 3000); // Poll every 3 seconds
+    }
+
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [isHost, roomId]);
 
   const handleCopyCode = () => {
     if (room) {

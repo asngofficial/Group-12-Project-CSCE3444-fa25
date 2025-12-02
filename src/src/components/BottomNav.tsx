@@ -36,9 +36,10 @@ const navItems: NavItem[] = [
 type BottomNavProps = {
   onNavigate: (page: string) => void;
   currentPage: string;
+  isGameInProgress: boolean;
 };
 
-export function BottomNav({ onNavigate, currentPage }: BottomNavProps) {
+export function BottomNav({ onNavigate, currentPage, isGameInProgress }: BottomNavProps) {
   const { currentUser } = useUser();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -67,10 +68,15 @@ export function BottomNav({ onNavigate, currentPage }: BottomNavProps) {
           <button
             key={id}
             onClick={() => onNavigate(id)}
-            className={`flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-all hover:scale-105 active:scale-95 relative ${
+            disabled={isGameInProgress}
+            className={`flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-all active:scale-95 relative ${
               currentPage === id 
                 ? 'text-foreground' 
                 : 'text-muted-foreground'
+            } ${
+              isGameInProgress
+                ? 'cursor-not-allowed opacity-50'
+                : 'hover:scale-105'
             }`}
           >
             <div className="relative">

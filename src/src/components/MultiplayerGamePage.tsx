@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { PageWrapper } from "./PageWrapper";
-import { Trophy, Medal, Home, RotateCcw, Flag, Timer, User } from "lucide-react";
+import { Trophy, Medal, Home, RotateCcw, Flag, Timer, User, Info } from "lucide-react";
 import { Progress } from "./ui/progress";
 import { useUser } from "../contexts/UserContext";
 import { getRoom, leaveRoom, MultiplayerRoom } from "../lib/hybridAccountManager";
@@ -13,12 +13,13 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { boardStyles } from "./BoardCustomization";
 import { XPProgress } from "./XPProgress";
+import { useTheme } from "../contexts/ThemeContext";
 
 type MultiplayerGamePageProps = {
   onNavigate: (page: string, options?: any) => void;
   currentPage: string;
   roomId: string;
-  boardStyle?: string;
+  setGameInProgress: (inProgress: boolean) => void;
 };
 
 function formatTime(seconds: number): string {
@@ -47,8 +48,9 @@ function getDifficultyColor(difficulty: string): string {
   }
 }
 
-export function MultiplayerGamePage({ onNavigate, currentPage, roomId, boardStyle = 'classic' }: MultiplayerGamePageProps) {
+export function MultiplayerGamePage({ onNavigate, currentPage, roomId, setGameInProgress }: MultiplayerGamePageProps) {
   const { currentUser, updateCurrentUser } = useUser();
+  const { isDarkMode } = useTheme();
   const [room, setRoom] = useState<MultiplayerRoom | null>(null);
   const [grid, setGrid] = useState<(number | null)[][]>([]);
   const [initialGrid, setInitialGrid] = useState<(number | null)[][]>([]);
@@ -58,6 +60,15 @@ export function MultiplayerGamePage({ onNavigate, currentPage, roomId, boardStyl
   const [loading, setLoading] = useState(true);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [earnedXP, setEarnedXP] = useState(0);
+  const [isForfeit, setIsForfeit] = useState(false);
+
+  // Effect to manage the global 'in-game' state
+  useEffect(() => {
+    setGameInProgress(true); // We are in a game
+    return () => {
+      setGameInProgress(false); // We are leaving the game
+    };
+  }, [setGameInProgress]);
 
   const gameEndHandledRef = useRef(false);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -82,8 +93,20 @@ export function MultiplayerGamePage({ onNavigate, currentPage, roomId, boardStyl
       
       setEarnedXP(totalXP);
       if (currentUser) {
-        updateCurrentUser({ xp: (currentUser.xp || 0) + totalXP });
+        const isWinner = currentPlayerInRoom?.placement === 1;
+        
+        const updates: Partial<UserAccount> = {
+          xp: (currentUser.xp || 0) + totalXP,
+        };
+
+        if (isWinner) {
+          updates.wins = (currentUser.wins || 0) + 1;
+          updates.averageTime = formatTime(currentPlayerInRoom.timeFinished || timer);
+        }
+
+        updateCurrentUser(updates);
       }
+      setIsForfeit(false); // It's not a forfeit, it's a win/loss
       setShowCompletionDialog(true);
     }
   }, [room, currentUser, updateCurrentUser]);
@@ -139,7 +162,7 @@ export function MultiplayerGamePage({ onNavigate, currentPage, roomId, boardStyl
 
   // Timer effect
   useEffect(() => {
-    if (loading || room?.status === 'finished') {
+    if (loading || room?.status === 'finished' || showForfeitDialog) {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       return;
     }
@@ -147,7 +170,7 @@ export function MultiplayerGamePage({ onNavigate, currentPage, roomId, boardStyl
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     };
-  }, [loading, room?.status]);
+  }, [loading, room?.status, showForfeitDialog]);
 
   // Keyboard input effect
   useEffect(() => {
@@ -262,9 +285,22 @@ export function MultiplayerGamePage({ onNavigate, currentPage, roomId, boardStyl
 
   const handleForfeit = () => {
     if (room && currentUser) {
-      leaveRoom(room.id, currentUser.id);
-      toast.info("You forfeited the match");
-      onNavigate('challenge');
+      setShowForfeitDialog(false); // Close the confirmation dialog
+
+      const forfeitXP = 100;
+      setEarnedXP(forfeitXP);
+
+      if (currentUser && forfeitXP > 0) {
+        updateCurrentUser({
+          xp: (currentUser.xp || 0) + forfeitXP,
+          level: Math.floor(((currentUser.xp || 0) + forfeitXP) / 1000) + 1,
+        });
+      }
+
+      leaveRoom(room.id, currentUser.id); // Notify server that we left
+
+      setIsForfeit(true);
+      setShowCompletionDialog(true); // Show the completion dialog
     }
   };
 
@@ -274,7 +310,12 @@ export function MultiplayerGamePage({ onNavigate, currentPage, roomId, boardStyl
     }
   };
 
-  const currentBoardStyle = boardStyles.find(s => s.id === boardStyle) || boardStyles[0];
+  const selectedStyleId = currentUser?.boardStyle || 'classic';
+  let finalStyleId = selectedStyleId;
+  if (selectedStyleId === 'classic') {
+    finalStyleId = isDarkMode ? 'classic-dark' : 'classic-light';
+  }
+  const currentBoardStyle = boardStyles.find(s => s.id === finalStyleId) || boardStyles[0];
 
   if (loading || !room || !currentUser) {
     return (
@@ -368,7 +409,7 @@ export function MultiplayerGamePage({ onNavigate, currentPage, roomId, boardStyl
                     <button key={`${rowIndex}-${colIndex}`} onClick={() => handleCellClick(rowIndex, colIndex)} disabled={isInitialCell || isGameOver || playerIsFinished} className={`
                       ${gridSize === 4 ? 'w-12 h-12 md:w-20 md:h-20' : gridSize === 6 ? 'w-10 h-10 md:w-16 md:h-16' : 'w-8 h-8 md:w-14 md:h-14'}
                       flex items-center justify-center transition-colors text-base md:text-2xl
-                      ${isInitialCell ? `bg-muted/60 font-bold text-foreground cursor-not-allowed border-2 md:border-4 ${currentBoardStyle.cellBorder}` : 'bg-card font-normal'}
+                      ${isInitialCell ? 'bg-muted font-bold text-foreground cursor-not-allowed' : 'bg-card font-normal'}
                       ${selectedCell?.[0] === rowIndex && selectedCell?.[1] === colIndex ? `ring-2 md:ring-4 ring-inset ${currentBoardStyle.selectedCellBorder.replace('border-', 'ring-')} bg-primary/10` : ''}
                       ${isUserFilled ? 'text-primary' : ''}
                       ${!isInitialCell ? 'hover:bg-muted/30 cursor-pointer' : ''}
@@ -415,23 +456,31 @@ export function MultiplayerGamePage({ onNavigate, currentPage, roomId, boardStyl
       </AlertDialog>
 
       {/* Completion Dialog */}
-      <Dialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog}>
-        <DialogContent className="max-w-sm">
+      <Dialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog} modal={true}>
+        <DialogContent className="max-w-sm" preventClose={true}>
           <DialogHeader>
             <DialogTitle className="text-center text-2xl">
-              {currentPlayer?.placement === 1 ? (
+              {isForfeit ? (
+                <div className="flex flex-col items-center gap-2"><Flag className="h-12 w-12 text-destructive" /><span>Match Forfeited</span></div>
+              ) : !currentPlayer?.placement || currentPlayer.placement === 0 ? (
+                <div className="flex flex-col items-center gap-2"><Info className="h-12 w-12 text-muted-foreground" /><span>Game Over</span></div>
+              ) : currentPlayer.placement === 1 ? (
                 <div className="flex flex-col items-center gap-2"><Trophy className="h-12 w-12 text-yellow-500 animate-bounce" /><span>Victory!</span></div>
               ) : (
-                <div className="flex flex-col items-center gap-2"><Medal className="h-12 w-12 text-slate-400" /><span>#{currentPlayer?.placement}</span></div>
+                <div className="flex flex-col items-center gap-2"><Medal className="h-12 w-12 text-slate-400" /><span>#{currentPlayer.placement}</span></div>
               )}
             </DialogTitle>
             <DialogDescription className="text-center">
-              {currentPlayer?.placement === 1 ? "You finished first!" : `You finished #${currentPlayer?.placement}. Better luck next time!`}
+              {isForfeit
+                ? "You forfeited the match and received 100 XP."
+                : !currentPlayer?.placement || currentPlayer.placement === 0
+                ? "Your final rank could not be determined."
+                : currentPlayer.placement === 1 ? "You finished first!" : `You finished #${currentPlayer.placement}. Better luck next time!`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 p-4 rounded-lg text-center">
-              <p className="text-3xl mb-1">+{earnedXP} XP</p>
+              <p className="text-3xl mb-1">+{isForfeit ? 100 : earnedXP} XP</p>
               <p className="text-sm text-muted-foreground">Time: {formatTime(currentPlayer?.timeFinished || timer)}</p>
             </div>
             {currentUser && (
@@ -444,14 +493,13 @@ export function MultiplayerGamePage({ onNavigate, currentPage, roomId, boardStyl
               <Button variant="outline" className="flex-1" onClick={() => { setShowCompletionDialog(false); onNavigate('challenge'); }}>
                 <Home className="h-4 w-4 mr-2" /> Home
               </Button>
-              <Button className="flex-1" onClick={handlePlayAgain}>
+              <Button className="flex-1" onClick={handlePlayAgain} disabled={isForfeit}>
                 <RotateCcw className="h-4 w-4 mr-2" /> 
                 Play Again
               </Button>
             </div>
           </div>
         </DialogContent>
-      </Dialog>
-    </PageWrapper>
+      </Dialog>    </PageWrapper>
   );
 }
