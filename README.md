@@ -1,4 +1,4 @@
-### MSSR_GROUP_12_PROJECT_CSCE3444_FA25###
+### MSSR_GROUP_12_PROJECT_CSCE3444_FA25 ###
 # Sudoku Web Application
 TEAM MEMBERS:
 Matthew Best
