@@ -182,9 +182,7 @@ export function GamePage({ onNavigate, currentPage, setGameInProgress, difficult
       else if (event.key === 'ArrowRight') newCol = Math.min(grid.length - 1, col + 1);
       
       if (newRow !== row || newCol !== col) {
-        if (initialGrid[newRow][newCol] === null) {
-            setSelectedCell([newRow, newCol]);
-        }
+        setSelectedCell([newRow, newCol]);
       }
     };
 
@@ -216,22 +214,18 @@ export function GamePage({ onNavigate, currentPage, setGameInProgress, difficult
   }, [grid, initialGrid, solutionGrid, timer, hintsUsed, difficulty, showCompletionDialog]);
 
   const handleCellClick = (row: number, col: number) => {
-    // Allow clicking if cell is empty OR if it's not an initial clue
-    if (initialGrid[row][col] === null) {
-      setSelectedCell([row, col]);
-    }
+    setSelectedCell([row, col]);
   };
 
   const handleNumberInput = (number: number) => {
     if (selectedCell) {
       const [row, col] = selectedCell;
-      const newGrid = [...grid];
-      newGrid[row][col] = number === 0 ? null : number;
-      setGrid(newGrid);
-      setSelectedCell(null);
-
-      // Check if puzzle is complete
-      checkPuzzleComplete(newGrid);
+      if (initialGrid[row][col] === null) { // Prevent changing initial numbers
+        const newGrid = [...grid];
+        newGrid[row][col] = number === 0 ? null : number;
+        setGrid(newGrid);
+        checkPuzzleComplete(newGrid);
+      }
     }
   };
 
@@ -445,6 +439,8 @@ export function GamePage({ onNavigate, currentPage, setGameInProgress, difficult
   
   const currentBoardStyle = boardStyles.find(s => s.id === finalStyleId) || boardStyles[0];
 
+  const selectedNumber = selectedCell ? grid[selectedCell[0]][selectedCell[1]] : null;
+
   return (
     <PageWrapper onNavigate={onNavigate} currentPage={currentPage}>
       <div className="flex flex-col h-screen">
@@ -551,7 +547,9 @@ export function GamePage({ onNavigate, currentPage, setGameInProgress, difficult
                   const boxRowSize = gridSize === 6 ? 2 : boxSize;
                   const isInitialCell = initialGrid[rowIndex][colIndex] !== null;
                   const isUserFilled = !isInitialCell && cell !== null;
-                  
+                  const isSelected = selectedCell?.[0] === rowIndex && selectedCell?.[1] === colIndex;
+                  const isHighlighted = selectedNumber !== null && cell === selectedNumber;
+
                   // Determine which borders this cell needs
                   const needsRightBorder = colIndex < gridSize - 1;
                   const needsBottomBorder = rowIndex < gridSize - 1;
@@ -566,8 +564,10 @@ export function GamePage({ onNavigate, currentPage, setGameInProgress, difficult
                         ${gridSize === 4 ? 'w-12 h-12 md:w-20 md:h-20 lg:w-24 lg:h-24' : gridSize === 6 ? 'w-10 h-10 md:w-16 md:h-16 lg:w-20 lg:h-20' : 'w-8 h-8 md:w-14 md:h-14 lg:w-16 lg:h-16'}
                         flex items-center justify-center transition-colors text-base md:text-2xl lg:text-3xl
                         ${isInitialCell ? 'bg-muted font-bold text-foreground cursor-not-allowed' : 'bg-card font-normal'}
-                        ${selectedCell?.[0] === rowIndex && selectedCell?.[1] === colIndex 
-                          ? `ring-2 md:ring-4 ring-inset ${currentBoardStyle.selectedCellBorder.replace('border-', 'ring-')} bg-primary/10`
+                        ${isSelected
+                          ? `ring-2 md:ring-4 ring-inset ${currentBoardStyle.selectedCellBorder.replace('border-', 'ring-')} bg-primary/20`
+                          : isHighlighted
+                          ? 'bg-primary/10'
                           : ''
                         }
                         ${isUserFilled ? 'text-primary' : ''}
@@ -594,7 +594,10 @@ export function GamePage({ onNavigate, currentPage, setGameInProgress, difficult
               size="sm"
               onClick={() => handleNumberInput(number)}
               disabled={!selectedCell}
-              className="aspect-square text-base md:text-xl lg:text-2xl h-12 md:h-16 lg:h-20"
+              className={`
+                aspect-square text-base md:text-xl lg:text-2xl h-12 md:h-16 lg:h-20
+                ${selectedNumber === number ? 'bg-primary/20' : ''}
+              `}
             >
               {number}
             </Button>
