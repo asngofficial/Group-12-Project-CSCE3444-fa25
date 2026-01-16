@@ -1,4 +1,4 @@
-type Difficulty = 'Very Easy' | 'Easy' | 'Medium' | 'Hard' | 'Expert';
+type Difficulty = 'Easy' | 'Medium' | 'Hard' | 'Expert';
 
 // Seeded random number generator for consistent daily puzzles
 class SeededRandom {
@@ -23,7 +23,6 @@ class SeededRandom {
 // Get grid size based on difficulty
 export function getGridSize(difficulty: Difficulty): number {
   switch (difficulty) {
-    case 'Very Easy': return 4; // 4x4 grid
     case 'Easy': return 4;    // 4x4 grid
     case 'Medium': return 6;  // 6x6 grid
     case 'Hard': return 9;    // 9x9 grid
@@ -126,7 +125,6 @@ function removeNumbers(
   // Determine how many cells to remove based on difficulty and grid size
   let removePercentage: number;
   switch (difficulty) {
-    case 'Very Easy': removePercentage = 0.15; break; // Remove 15%
     case 'Easy': removePercentage = 0.30; break;    // Remove 30%
     case 'Medium': removePercentage = 0.50; break;  // Remove 50%
     case 'Hard': removePercentage = 0.65; break;    // Remove 65%
@@ -168,7 +166,7 @@ export function generateSudokuGrid(difficulty: Difficulty, seed?: number): {
   const rng = seed !== undefined ? new SeededRandom(seed) : undefined;
   
   // Create a complete valid solution
-  const solution = createSolution(.size, rng);
+  const solution = createSolution(size, rng);
   
   // Remove numbers based on difficulty
   const puzzle = removeNumbers(solution, difficulty, rng);

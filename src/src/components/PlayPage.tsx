@@ -2,7 +2,7 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { PageWrapper } from "./PageWrapper";
-import { Play, Zap, Target, Flame, Trophy, Sprout, Gem, Calendar, CheckCircle2, Clock, HelpCircle, Feather } from "lucide-react";
+import { Play, Zap, Target, Flame, Trophy, Sprout, Gem, Calendar, CheckCircle2, Clock, HelpCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { getTodayDateString } from "../utils/sudokuGenerator";
 import { toast } from "sonner";
@@ -21,15 +21,6 @@ type Difficulty = {
 };
 
 const difficulties: Difficulty[] = [
-  {
-    id: 'very-easy',
-    name: 'Very Easy',
-    description: 'A gentle introduction',
-    xpReward: '+25 XP',
-    color: 'from-cyan-500 to-cyan-600',
-    icon: Feather,
-    estimatedTime: '2-5 min'
-  },
   {
     id: 'easy',
     name: 'Easy',

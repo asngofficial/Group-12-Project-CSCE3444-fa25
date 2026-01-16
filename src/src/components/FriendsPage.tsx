@@ -11,7 +11,6 @@ import { useUser } from "../contexts/UserContext";
 import { getAllUsers, getFriends, UserAccount, sendFriendRequest, getNotifications, getUnreadNotificationCount, acceptFriendRequest, rejectFriendRequest, getFriendRequests, Notification, removeFriend, getUserById, acceptChallenge, declineChallenge } from "../lib/hybridAccountManager";
 import type { FriendRequest as APIFriendRequest } from "../lib/apiClient";
 import { toast } from "sonner";
-import { Skeleton } from "./ui/skeleton";
 
 import { ScrollArea } from "./ui/scroll-area";
 
@@ -20,23 +19,6 @@ type FriendsPageProps = {
   currentPage: string;
   onJoinRoom?: (roomId: string) => void;
 };
-
-const FriendListSkeleton = () => (
-  <div className="space-y-3">
-    {Array.from({ length: 4 }).map((_, i) => (
-      <Card key={i} className="p-4">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-12 w-12 rounded-full" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-2/4" />
-            <Skeleton className="h-3 w-3/4" />
-          </div>
-          <Skeleton className="h-8 w-8" />
-        </div>
-      </Card>
-    ))}
-  </div>
-);
 
 export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPageProps) {
   const { currentUser, updateCurrentUser } = useUser();
@@ -47,7 +29,6 @@ export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPage
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [friendRequests, setFriendRequests] = useState<APIFriendRequest[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState("friends");
 
@@ -85,7 +66,6 @@ export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPage
 
   const loadData = async () => {
     if (currentUser) {
-      setLoading(true);
       try {
         const friendsList = await getFriends(currentUser.id);
         setFriends(friendsList);
@@ -97,8 +77,6 @@ export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPage
         setFriendRequests(requests);
       } catch (error) {
         console.error('Failed to load friends data:', error);
-      } finally {
-        setLoading(false);
       }
     }
   };
@@ -249,14 +227,12 @@ export function FriendsPage({ onNavigate, currentPage, onJoinRoom }: FriendsPage
 
           {/* My Friends Tab */}
           <TabsContent value="friends" className="p-4 space-y-3">
-            {loading ? (
-              <FriendListSkeleton />
-            ) : friends.length === 0 ? (
+            {friends.length === 0 ? (
               <Card className="p-8 text-center">
                 <Users className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-                <p className="mb-2 font-semibold">No friends yet</p>
+                <p className="mb-2">No friends yet</p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Add friends to compete and see them on the leaderboard.
+                  Add friends to compete and compare scores
                 </p>
                 <Button onClick={() => setActiveTab("add")}>
                   <UserPlus className="h-4 w-4 mr-2" />
